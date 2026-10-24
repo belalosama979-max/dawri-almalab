@@ -1,0 +1,1669 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>دوري الملعب</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="إدارة دوريات كرة القدم بين الطلاب على ملعب واحد.">
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#0E6B37">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="دوري الملعب">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+/* Layout: one-column field-side console; a chalk-lined "pitch" card carries the clock, everything else sits on plain surfaces; fixed bottom tab bar for thumbs. */
+:root{
+  --bg:#F2F5F1; --surface:#FFFFFF; --surface-2:#E6ECE5; --ink:#0C1810; --muted:#56685C; --line:#D3DCD3;
+  --pitch:#0E6B37; --pitch-deep:#09482A; --chalk:#F4FAF2; --chalk-warn:#FFD65A;
+  --accent:#0F8A45; --accent-ink:#FFFFFF;
+  --live:#D9412A; --live-soft:#FBE3DE; --warn:#A86F00; --warn-soft:#FFF1CF; --ok:#0F8A45; --ok-soft:#DDF2E3; --gold:#B8860B; --gold-soft:#FBF0D2;
+  --shade:rgba(6,16,10,.55);
+  --font-display:'Changa','IBM Plex Sans Arabic',system-ui,'Segoe UI',Tahoma,sans-serif;
+  --font-body:'IBM Plex Sans Arabic',system-ui,'Segoe UI',Tahoma,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#09110C; --surface:#111B14; --surface-2:#18251C; --ink:#E8F2EA; --muted:#93A799; --line:#233328;
+  --pitch:#0D5A2F; --pitch-deep:#083B1F; --chalk:#F0F8EE; --accent:#2EC06B; --accent-ink:#03130A;
+  --live:#FF6B52; --live-soft:#3A1712; --warn:#F0B53A; --warn-soft:#33270B; --ok:#2EC06B; --ok-soft:#0F2C1A; --gold:#E9B93C; --gold-soft:#2E2610;
+  --shade:rgba(0,0,0,.65); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#09110C; --surface:#111B14; --surface-2:#18251C; --ink:#E8F2EA; --muted:#93A799; --line:#233328;
+  --pitch:#0D5A2F; --pitch-deep:#083B1F; --chalk:#F0F8EE; --accent:#2EC06B; --accent-ink:#03130A;
+  --live:#FF6B52; --live-soft:#3A1712; --warn:#F0B53A; --warn-soft:#33270B; --ok:#2EC06B; --ok-soft:#0F2C1A; --gold:#E9B93C; --gold-soft:#2E2610;
+  --shade:rgba(0,0,0,.65); color-scheme:dark }
+:root[data-accent="blue"]{--pitch:#1B4C8C; --pitch-deep:#113463; --accent:#2D73D2; --accent-ink:#FFFFFF}
+:root[data-accent="orange"]{--pitch:#A9481A; --pitch-deep:#78310F; --accent:#D2611E; --accent-ink:#FFFFFF}
+:root[data-accent="black"]{--pitch:#171C19; --pitch-deep:#0B0E0C; --accent:#1F8F4E; --accent-ink:#FFFFFF}
+
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--font-body);font-size:16px;line-height:1.55;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.42}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{margin:0;font-family:var(--font-display);line-height:1.25;text-wrap:balance}
+p{margin:0}
+.ic{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.num{font-variant-numeric:tabular-nums}
+.ltr{direction:ltr;unicode-bidi:isolate}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{max-width:1000px;margin:0 auto;display:flex;align-items:center;gap:8px;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{display:flex;align-items:center;gap:10px;background:none;border:0;padding:4px 0;min-width:0;flex:1;text-align:right}
+.logo{width:38px;height:38px;border-radius:11px;background:var(--pitch);color:var(--chalk);display:grid;place-items:center;flex:none}
+.brand-t{display:grid;min-width:0}
+.brand-t b{font-family:var(--font-display);font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-t small{font-size:12px;color:var(--muted)}
+.top-act{display:flex;gap:4px}
+.icon-btn{width:44px;height:44px;border-radius:12px;border:1px solid transparent;background:none;display:grid;place-items:center;color:var(--ink)}
+.icon-btn:hover{background:var(--surface-2)}
+.icon-btn[aria-current="page"]{background:var(--surface-2);color:var(--accent)}
+
+/* main */
+.main{max-width:1000px;margin:0 auto;display:grid;gap:16px;padding-block:16px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.main>*{min-width:0}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sec-head h2{font-size:24px;font-weight:700}
+.eyebrow{font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--muted)}
+.disp{font-family:var(--font-display)}
+
+/* nav */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(4px,env(safe-area-inset-left,0px));padding-right:max(4px,env(safe-area-inset-right,0px))}
+.nav-in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.nav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px 10px;background:none;border:0;font-size:12px;font-weight:600;color:var(--muted);min-height:62px}
+.nav button[aria-current="page"]{color:var(--accent)}
+.nav button[aria-current="page"]::before{content:"";position:absolute;top:0;inset-inline:28%;height:3px;border-radius:0 0 3px 3px;background:var(--accent)}
+.nav .dot{position:absolute;top:9px;inset-inline-start:calc(50% + 8px);width:9px;height:9px;border-radius:50%;background:var(--live);animation:pulse 1.2s infinite}
+
+/* surfaces */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:14px}
+.card h3{font-size:18px;font-weight:700}
+.grid2{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.row>.grow{flex:1 1 160px}
+.stack{display:grid;gap:10px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 18px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:600;text-decoration:none;transition:transform .12s ease,background .15s}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn-primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn-ink{background:var(--ink);color:var(--bg);border-color:transparent}
+.btn-danger{color:var(--live);border-color:var(--live)}
+.btn-chalk{background:var(--chalk);color:var(--pitch-deep);border-color:transparent}
+.btn-onpitch{background:rgba(255,255,255,.12);color:var(--chalk);border-color:rgba(255,255,255,.28)}
+.btn-xl{min-height:68px;font-size:clamp(18px,5vw,22px);white-space:nowrap;font-family:var(--font-display);font-weight:700;width:100%;border-radius:18px}
+.btn-wide{width:100%}
+.btn-sm{min-height:40px;padding:0 12px;font-size:14px;border-radius:11px}
+
+/* pitch card */
+.pitch{position:relative;overflow:hidden;isolation:isolate;background:var(--pitch);color:var(--chalk);border-radius:22px;padding:18px}
+.pitch .lines{position:absolute;inset:0;width:100%;height:100%;z-index:-1;opacity:.2;pointer-events:none}
+.pitch-in{display:grid;gap:14px}
+.pitch .eyebrow{color:var(--chalk);opacity:.8}
+.pitch-top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.state-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:99px;background:rgba(0,0,0,.22);font-weight:700;font-size:14px}
+.state-chip i{width:9px;height:9px;border-radius:50%;background:var(--chalk)}
+.state-chip.live i{background:#FF7A62;animation:pulse 1.1s infinite}
+.clock{font-family:var(--font-display);font-weight:700;font-size:clamp(84px,27vw,210px);line-height:1;letter-spacing:.01em;font-variant-numeric:tabular-nums;text-align:center;direction:ltr}
+.clock.sm{font-size:clamp(54px,16vw,96px)}
+.clock.low{color:var(--chalk-warn)}
+.clock.zero{color:#FF9C88;animation:blink 1s steps(2,start) infinite}
+.bar{height:8px;background:rgba(255,255,255,.2);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--chalk);border-radius:99px;transition:width .3s linear}
+.vs-line{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;text-align:center}
+.vs-line b{font-family:var(--font-display);font-size:clamp(20px,6vw,32px);font-weight:700;overflow-wrap:anywhere;min-width:0}
+.vs-line span{font-family:var(--font-display);font-size:18px;opacity:.75}
+.sc,.msc{unicode-bidi:isolate}
+.vs-line .sc{font-size:clamp(28px,8vw,44px);opacity:1;font-weight:800;direction:ltr}
+
+/* scoreboard */
+.board{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px 10px}
+.side{display:grid;gap:10px;justify-items:center;text-align:center;min-width:0}
+.side-name{font-family:var(--font-display);font-weight:700;font-size:clamp(19px,5.5vw,30px);overflow-wrap:anywhere;line-height:1.2}
+.score-big{font-family:var(--font-display);font-weight:800;font-size:clamp(66px,20vw,130px);line-height:1;font-variant-numeric:tabular-nums}
+.board .colon{font-family:var(--font-display);font-size:clamp(40px,12vw,80px);font-weight:700;color:var(--muted);align-self:center;padding-top:28px}
+.stepper{display:flex;gap:10px}
+.stepper button{width:62px;height:62px;border-radius:16px;border:1px solid var(--line);background:var(--surface-2);display:grid;place-items:center}
+.stepper button.plus{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.stepper .ic{width:28px;height:28px;stroke-width:2.6}
+.pk{display:grid;gap:8px;padding:12px;border-radius:14px;background:var(--warn-soft);color:var(--ink)}
+.pk .row button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+
+.ctrl{display:grid;gap:10px}
+.ctrl-row{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr))}
+.adj{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.adj .btn{min-height:46px;padding:0 6px;font-size:15px}
+.errs{display:grid;gap:6px;padding:12px 14px;border-radius:14px;background:var(--live-soft);color:var(--ink);font-size:14px}
+.errs b{color:var(--live)}
+.note{padding:12px 14px;border-radius:14px;background:var(--surface-2);font-size:14px;color:var(--ink)}
+.note.warn{background:var(--warn-soft)}
+.note.ok{background:var(--ok-soft)}
+.banner{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 16px;border-radius:16px;background:var(--warn-soft);border:1px solid var(--warn)}
+.banner.install{background:var(--ok-soft);border-color:var(--accent)}
+.steps-list{margin:0;padding-inline-start:22px;display:grid;gap:10px}
+.banner b{font-family:var(--font-display);font-size:18px}
+
+/* kpis */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:grid;gap:2px}
+.kpi b{font-family:var(--font-display);font-size:30px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi span{font-size:13px;color:var(--muted)}
+@media (max-width:520px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px}
+.quick .btn{justify-content:flex-start;min-height:56px}
+
+/* match list */
+.mlist{display:grid;gap:8px}
+.mrow{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:6px}
+.mrow.is-current{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.mrow.is-next{border-color:var(--accent);border-style:dashed}
+.mrow.is-cancelled .mt b{text-decoration:line-through;opacity:.6}
+.mmain{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;background:none;border:0;padding:8px;text-align:right;min-width:0;border-radius:12px}
+.mmain:hover{background:var(--surface-2)}
+.mno{width:36px;height:36px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-variant-numeric:tabular-nums}
+.is-current .mno{background:var(--accent);color:var(--accent-ink)}
+.mbody{display:grid;gap:4px;min-width:0}
+.mt{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+.mt b{font-weight:600;overflow-wrap:anywhere;min-width:0}
+.mt b:last-child{text-align:left}
+.mt .msc{font-family:var(--font-display);font-weight:700;font-variant-numeric:tabular-nums;direction:ltr;min-width:52px;text-align:center}
+.mt .vs{color:var(--muted);font-size:13px}
+.mmeta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;background:var(--surface-2);color:var(--ink)}
+.chip.live{background:var(--live-soft);color:var(--live)}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.gold{background:var(--gold-soft);color:var(--gold)}
+.arrows{display:flex;flex-direction:column;gap:2px}
+.arrows .icon-btn{width:40px;height:36px}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:11px 9px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+th{font-size:12px;color:var(--muted);font-weight:600;background:var(--surface-2)}
+td.name{text-align:right;font-weight:600;white-space:normal;min-width:110px}
+td.pts{font-family:var(--font-display);font-weight:800;font-size:19px}
+tr.first td{background:var(--gold-soft)}
+.rank{font-family:var(--font-display);font-weight:700}
+
+/* forms */
+.field{display:grid;gap:6px}
+.field>label,.lbl{font-size:14px;font-weight:600}
+.hint{font-size:13px;color:var(--muted)}
+input[type=file]{width:100%;font-size:14px;padding:10px;border:1px dashed var(--line);border-radius:12px;background:var(--surface)}
+input[type=text],input[type=number],input[type=password],select,textarea{width:100%;min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:0 12px}
+textarea{padding:10px 12px;min-height:160px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;direction:ltr;text-align:left}
+input[type=number]{font-variant-numeric:tabular-nums}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{flex:1 1 auto;min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:0 14px;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:10px 0}
+.chk input{width:22px;height:22px;margin-top:2px;accent-color:var(--accent);flex:none}
+.plist{display:grid;gap:8px}
+.prow{display:grid;grid-template-columns:34px 1fr 44px;gap:8px;align-items:center}
+.pno{font-family:var(--font-display);font-weight:700;color:var(--muted);text-align:center}
+.pts3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.custom{display:flex;align-items:center;gap:8px}
+.custom input{max-width:120px}
+.preview{display:flex;flex-wrap:wrap;gap:8px 16px;padding:14px;border-radius:14px;background:var(--surface-2)}
+.preview b{font-family:var(--font-display);font-size:20px}
+
+/* stats entry */
+.stats-box{display:grid;gap:12px;border:1px dashed var(--line);border-radius:16px;padding:12px}
+.st-side{display:grid;gap:8px}
+.st-side h4{font-size:16px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.goal-ov{z-index:55}
+.gl-title{font-size:17px;display:flex;align-items:center;gap:8px}
+.goal{display:grid;grid-template-columns:34px 1fr 44px;gap:6px;align-items:center;padding:4px 4px 4px 0;border-radius:12px;background:var(--surface-2);border:0;width:100%;text-align:right;color:var(--ink)}
+.goal-unk{grid-template-columns:34px 1fr;border:1px dashed var(--warn);background:var(--warn-soft);min-height:52px}
+.gno{display:grid;place-items:center;color:var(--accent)}
+.goal-main{display:grid;gap:1px;background:none;border:0;padding:6px 4px;text-align:right;min-width:0;color:var(--ink)}
+.goal-main b{font-weight:700;overflow-wrap:anywhere}
+.goal-main small{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:4px}
+.goal-main small .ic{width:15px;height:15px}
+.seg.pick button{flex:0 1 auto;min-height:48px}
+.seg.pick button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.ev{display:grid;grid-template-columns:30px 1fr 44px;gap:6px 8px;align-items:center;padding:8px;border-radius:12px;background:var(--surface-2)}
+.ev .ic{color:var(--muted)}
+.ev select{min-height:44px}
+
+/* lists in stats */
+.lb{display:grid;gap:6px}
+.lb-row{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;background:var(--surface-2)}
+.lb-row b{font-family:var(--font-display);font-size:20px;font-variant-numeric:tabular-nums}
+.lb-row .who{display:grid;min-width:0}
+.lb-row .who span{overflow-wrap:anywhere}
+.lb-row .who small{font-size:12px;color:var(--muted)}
+
+/* bracket */
+.bracket{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(190px,1fr);gap:12px;overflow-x:auto;padding-bottom:6px}
+.bcol{display:grid;gap:8px;align-content:space-around}
+.bcol h4{font-size:15px;color:var(--muted)}
+.bm{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.bm div{display:flex;justify-content:space-between;gap:8px;padding:8px 10px}
+.bm div+div{border-top:1px solid var(--line)}
+.bm .w{font-weight:700;background:var(--ok-soft)}
+.bm .tbd{color:var(--muted)}
+
+/* sheet */
+.sheet-ov{position:fixed;inset:0;z-index:50;background:var(--shade);display:flex;align-items:flex-end;justify-content:center;animation:fade .15s ease}
+.sheet{width:100%;max-width:640px;max-height:92vh;overflow:auto;background:var(--bg);border-radius:22px 22px 0 0;display:grid;gap:14px;padding-block:18px calc(18px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));animation:rise .2s ease}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sheet-head h3{font-size:20px}
+@media (min-width:720px){.sheet-ov{align-items:center}.sheet{border-radius:22px}}
+
+/* flash */
+.flash{position:fixed;inset:0;z-index:60;display:grid;place-items:center;text-align:center;padding:24px;color:#FFFFFF;background:#C9331D;animation:flashbg 1.1s infinite}
+.flash.ready{background:#0B6A35;animation:none}
+.flash-in{display:grid;gap:18px;justify-items:center;max-width:520px}
+.flash h2{font-size:clamp(40px,12vw,78px);font-weight:800}
+.flash p{font-size:20px}
+.flash .btn{background:#FFFFFF;color:#111111;border-color:transparent;min-width:260px}
+
+/* toast */
+.toast{position:fixed;z-index:70;left:50%;transform:translateX(-50%);top:calc(72px + env(safe-area-inset-top,0px));background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;font-weight:600;max-width:calc(100% - 32px);text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:rise .2s ease}
+
+/* champion */
+.champ{position:relative;overflow:hidden;isolation:isolate;text-align:center;border-radius:24px;padding:28px 18px;background:var(--pitch-deep);color:var(--chalk);display:grid;gap:12px;justify-items:center}
+.champ .lines{position:absolute;inset:0;width:100%;height:100%;z-index:-1;opacity:.16}
+.champ .trophy{width:120px;height:120px;color:#F2C443;filter:drop-shadow(0 8px 18px rgba(0,0,0,.35));animation:lift 2.6s ease-in-out infinite}
+.champ h1{font-size:clamp(40px,12vw,80px);font-weight:800;line-height:1.1;overflow-wrap:anywhere}
+.champ .eyebrow{color:#F2C443;font-size:16px;opacity:1}
+.podium{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;width:100%;max-width:560px}
+.podium div{background:rgba(255,255,255,.1);border-radius:14px;padding:12px;display:grid;gap:2px}
+.podium small{opacity:.8}
+.podium b{font-family:var(--font-display);font-size:22px;overflow-wrap:anywhere}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:40;width:100%;height:100%}
+
+/* hero */
+.hero{position:relative;overflow:hidden;isolation:isolate;background:var(--pitch);color:var(--chalk);border-radius:24px;padding:28px 20px;display:grid;gap:14px}
+.hero .lines{position:absolute;inset:0;width:100%;height:100%;z-index:-1;opacity:.2}
+.hero h1{font-size:clamp(30px,8vw,48px);font-weight:800}
+.hero p{max-width:46ch;opacity:.9}
+.steps{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr))}
+.steps div{background:rgba(255,255,255,.1);border-radius:14px;padding:12px}
+.steps b{font-family:var(--font-display);display:block}
+
+.match-grid{display:grid;gap:14px}
+@media (min-width:900px){
+  .match-grid{grid-template-columns:1.15fr 1fr;align-items:start}
+  .match-grid .full{grid-column:1/-1}
+}
+.hist{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.hist .open{display:grid;gap:2px;background:none;border:0;text-align:right;padding:4px}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes blink{to{visibility:hidden}}
+@keyframes flashbg{0%,100%{background:#C9331D}50%{background:#8E1F10}}
+@keyframes fade{from{opacity:0}}
+@keyframes rise{from{transform:translateY(14px);opacity:0}}
+@keyframes lift{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.toast{animation-name:rise}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+
+<div id="app" dir="rtl"></div>
+<div id="sheet-root" dir="rtl"></div>
+<div id="goal-root" dir="rtl"></div>
+<div id="flash-root" dir="rtl"></div>
+<div id="toast-root" dir="rtl"></div>
+
+<script>
+(function(){
+'use strict';
+const ROOT=document.documentElement;
+ROOT.lang='ar'; ROOT.dir='rtl';
+const HOST_THEME=ROOT.getAttribute('data-theme');
+
+/* ---------------- utilities ---------------- */
+const now=()=>Date.now();
+const uid=()=>Math.random().toString(36).slice(2,8)+(now()%1e7).toString(36);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const fmt=ms=>{ms=Math.max(0,ms||0);const s=Math.ceil(ms/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');};
+const $=(s,r)=>(r||document).querySelector(s);
+const KEY='dawri-almalab-v1';
+const IS_TOP=(()=>{try{return window.self===window.top;}catch(e){return false;}})();
+
+const ICONS={
+ home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+ timer:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/>',
+ list:'<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
+ table:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/>',
+ chart:'<path d="M5 20V11M11 20V5M17 20v-7M3 20h18"/>',
+ gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.8 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3.2 14H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 3.2V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 20.8 10H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+ history:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>',
+ trash:'<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>',
+ up:'<path d="M6 15l6-6 6 6"/>', down:'<path d="M6 9l6 6 6-6"/>',
+ play:'<path d="M7 4v16l13-8z" fill="currentColor"/>', pause:'<path d="M7 4h3v16H7zM14 4h3v16h-3z" fill="currentColor"/>',
+ stop:'<rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor"/>',
+ check:'<path d="M5 12l5 5L20 7"/>',
+ trophy:'<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/>',
+ ball:'<circle cx="12" cy="12" r="9"/><path d="M12 7.5l4 2.9-1.5 4.6h-5L8 10.4z"/><path d="M12 7.5V3.2M16 10.4l4.2-1.3M14.5 15l2.6 3.6M9.5 15l-2.6 3.6M8 10.4L3.8 9.1"/>',
+ shuffle:'<path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>',
+ copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>',
+ x:'<path d="M6 6l12 12M18 6L6 18"/>',
+ skip:'<path d="M5 4l10 8-10 8zM19 5v14"/>',
+ flag:'<path d="M5 21V4h12l-2 4 2 4H5"/>',
+ assist:'<path d="M4 18l6-6 4 4 6-7"/><path d="M15 9h5v5"/>',
+ edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+ lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+ replay:'<path d="M4 12a8 8 0 1 0 2.3-5.7L4 8.5"/><path d="M4 4v4.5h4.5"/>',
+ download:'<path d="M12 4v11M7 10l5 5 5-5M4 20h16"/>',
+ upload:'<path d="M12 16V5M7 10l5-5 5 5M4 20h16"/>',
+ print:'<path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"/>',
+ sound:'<path d="M4 9h4l5-4v14l-5-4H4zM17 9a4 4 0 0 1 0 6M19.5 6.5a8 8 0 0 1 0 11"/>',
+ users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/>'
+};
+const ic=n=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]||''}</svg>`;
+const PITCH_LINES=`<svg class="lines" viewBox="0 0 400 240" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#FFFFFF" stroke-width="2"><rect x="10" y="10" width="380" height="220"/><line x1="200" y1="10" x2="200" y2="230"/><circle cx="200" cy="120" r="38"/><circle cx="200" cy="120" r="2.5" fill="#FFFFFF"/><rect x="10" y="62" width="58" height="116"/><rect x="332" y="62" width="58" height="116"/><rect x="10" y="94" width="22" height="52"/><rect x="368" y="94" width="22" height="52"/></g></svg>`;
+const TROPHY=`<svg class="trophy" viewBox="0 0 64 64" aria-hidden="true"><path fill="currentColor" d="M18 6h28v14a14 14 0 0 1-28 0z"/><path fill="none" stroke="currentColor" stroke-width="4" d="M18 11H9a9 9 0 0 0 10 12M46 11h9a9 9 0 0 1-10 12"/><rect x="29" y="33" width="6" height="11" fill="currentColor"/><path fill="currentColor" d="M21 44h22l3 8H18z"/><rect x="15" y="52" width="34" height="6" rx="2" fill="currentColor"/></svg>`;
+
+const ORD=['الأولى','الثانية','الثالثة','الرابعة','الخامسة','السادسة','السابعة','الثامنة','التاسعة','العاشرة'];
+/* scores are printed inside an LTR run, so the right-hand number belongs to the right-hand (first) side */
+const sc2=(a,b)=>b+' – '+a;
+const matchLabel=i=>'المباراة '+(i<10?ORD[i]:(i+1));
+const TB_LABEL={pts:'مجموع النقاط',gd:'فارق الأهداف',gf:'الأهداف المسجلة',h2h:'المواجهة المباشرة',w:'عدد الانتصارات'};
+const STATE_LABEL={idle:'لم يبدأ',running:'جارٍ',paused:'متوقف مؤقتاً',done:'مكتمل'};
+const FORMAT_LABEL={single:'دوري من دور واحد',double:'دوري من دورين',ko:'خروج المغلوب'};
+
+/* ---------------- storage ---------------- */
+let storageOK=true;
+function load(){
+  let d=null;
+  try{const raw=localStorage.getItem(KEY); if(raw) d=JSON.parse(raw);}catch(e){storageOK=false;}
+  if(!d||d.v!==1) d={v:1,leagues:[],currentId:null,draft:null,view:'home',prefs:{}};
+  d.prefs=Object.assign({theme:'system',accent:'green',sound:true,vibrate:true},d.prefs||{});
+  if(!Array.isArray(d.leagues)) d.leagues=[];
+  return d;
+}
+let DB=load();
+function save(){ try{localStorage.setItem(KEY,JSON.stringify(DB)); storageOK=true;}catch(e){storageOK=false;} }
+const ui={view:(location.hash==='#match'?'match':(DB.view||'home')),sheet:null,edit:null,statsOpen:{},statsPlayer:'',adminUntil:0,flash:null,toast:null,celebrate:false};
+
+/* ---------------- engine (pure logic, no DOM) ---------------- */
+const E={};
+E.roundRobin=(ids,legs)=>{
+  const arr=ids.slice(); if(arr.length%2) arr.push(null);
+  const n=arr.length,R=n-1,out=[],byes={}; let rot=arr.slice();
+  for(let r=0;r<R;r++){
+    for(let i=0;i<n/2;i++){
+      const x=rot[i],y=rot[n-1-i];
+      if(x===null||y===null){byes[r+1]=x===null?y:x;continue;}
+      const pair=((r+i)%2===0)?[x,y]:[y,x];
+      out.push({a:pair[0],b:pair[1],round:r+1,leg:1});
+    }
+    rot=[rot[0],rot[n-1]].concat(rot.slice(1,n-1));
+  }
+  if(legs===2){
+    out.slice().forEach(m=>out.push({a:m.b,b:m.a,round:m.round+R,leg:2}));
+    Object.keys(byes).forEach(k=>{byes[+k+R]=byes[k];});
+  }
+  return {matches:out,byes};
+};
+/* order matches for a single pitch: nobody plays twice in a row when avoidable, rounds stay roughly in order */
+E.arrange=(ms,starter,before)=>{
+  if(ms.length<2) return ms.slice();
+  const overlap=(p,c)=>p&&(p.a===c.a||p.a===c.b||p.b===c.a||p.b===c.b);
+  let best=null,bestScore=Infinity;
+  for(let t=0;t<500;t++){
+    const pool=ms.slice(),out=[];
+    while(pool.length){
+      const minR=Math.min.apply(null,pool.map(m=>m.round));
+      const prev=out[out.length-1]||before||null;
+      const win=t===0?0:1;
+      let cand=pool.filter(m=>m.round<=minR+win);
+      if(!out.length&&starter){
+        const c=pool.filter(m=>(m.a===starter||m.b===starter));
+        const c1=c.filter(m=>m.round<=minR+win);
+        if(c1.length) cand=c1; else if(c.length) cand=c;
+      }
+      let free=cand.filter(m=>!overlap(prev,m));
+      if(!free.length) free=pool.filter(m=>!overlap(prev,m)&&m.round<=minR+2);
+      const from=free.length?free:cand;
+      const lr=Math.min.apply(null,from.map(m=>m.round));
+      const lowest=t<2?from.filter(m=>m.round===lr):from;
+      const pick=t===0?lowest[0]:lowest[Math.floor(Math.random()*lowest.length)];
+      out.push(pick); pool.splice(pool.indexOf(pick),1);
+    }
+    let conf=(before&&out[0]&&overlap(before,out[0]))?1:0,dis=0;
+    for(let i=1;i<out.length;i++){ if(overlap(out[i-1],out[i])) conf++; if(out[i].round<out[i-1].round) dis++; }
+    const sc=conf*1000+dis;
+    if(sc<bestScore){best=out;bestScore=sc;if(sc===0)break;}
+  }
+  return best;
+};
+E.seedOrder=size=>{let o=[1];while(o.length<size){const n=o.length*2;o=o.reduce((a,s)=>a.concat([s,n+1-s]),[]);}return o;};
+E.winner=m=>m.sa>m.sb?m.a:m.sb>m.sa?m.b:m.pk;
+E.loser=m=>{const w=E.winner(m);return w===m.a?m.b:m.a;};
+E.koRounds=L=>{
+  const R=Math.round(Math.log2(L.ko.size)); const rounds=[L.ko.slots.slice()];
+  for(let r=0;r<R;r++){
+    const c=rounds[r],nx=[];
+    for(let k=0;k<c.length/2;k++){
+      const a=c[2*k],b=c[2*k+1]; let w;
+      if(a===undefined||b===undefined) w=undefined;
+      else if(a===null&&b===null) w=null;
+      else if(a===null) w=b; else if(b===null) w=a;
+      else{ const m=L.matches.find(x=>x.ko&&x.ko.r===r&&x.ko.k===k); w=(m&&m.status==='done'&&m.a===a&&m.b===b)?E.winner(m):undefined; }
+      nx.push(w);
+    }
+    rounds.push(nx);
+  }
+  return rounds;
+};
+E.koSync=L=>{
+  for(let pass=0;pass<8;pass++){
+    const rounds=E.koRounds(L),R=rounds.length-1; let changed=false;
+    for(let r=0;r<R;r++){
+      for(let k=0;k<rounds[r].length/2;k++){
+        const a=rounds[r][2*k],b=rounds[r][2*k+1];
+        const m=L.matches.find(x=>x.ko&&x.ko.r===r&&x.ko.k===k);
+        const ready=typeof a==='string'&&typeof b==='string';
+        if(ready&&!m){L.matches.push(newMatch(a,b,{ko:{r,k},round:r+1}));changed=true;}
+        else if(m&&m.status==='pending'){
+          if(!ready){L.matches.splice(L.matches.indexOf(m),1);changed=true;}
+          else if(m.a!==a||m.b!==b){m.a=a;m.b=b;changed=true;}
+        }
+      }
+    }
+    if(!changed) break;
+  }
+};
+E.isComplete=L=>{
+  if(L.format==='ko'){const r=E.koRounds(L);return typeof r[r.length-1][0]==='string';}
+  const v=L.matches.filter(m=>m.status!=='cancelled');
+  return v.length>0&&v.every(m=>m.status==='done');
+};
+E.table=L=>{
+  const P=L.points;
+  const rows=L.participants.map(p=>({id:p.id,name:p.name,P:0,W:0,D:0,L:0,GF:0,GA:0,GD:0,Pts:0}));
+  const by={}; rows.forEach(r=>by[r.id]=r);
+  const done=L.matches.filter(m=>m.status==='done');
+  done.forEach(m=>{
+    const A=by[m.a],B=by[m.b]; if(!A||!B) return;
+    A.P++;B.P++;A.GF+=m.sa;A.GA+=m.sb;B.GF+=m.sb;B.GA+=m.sa;
+    if(m.sa>m.sb){A.W++;B.L++;A.Pts+=P.win;B.Pts+=P.loss;}
+    else if(m.sa<m.sb){B.W++;A.L++;B.Pts+=P.win;A.Pts+=P.loss;}
+    else{A.D++;B.D++;A.Pts+=P.draw;B.Pts+=P.draw;}
+  });
+  rows.forEach(r=>r.GD=r.GF-r.GA);
+  const h2h=group=>{
+    const ids=new Set(group.map(r=>r.id)),mm=new Map(group.map(r=>[r.id,{pts:0,gd:0,gf:0}]));
+    done.forEach(m=>{ if(ids.has(m.a)&&ids.has(m.b)){ const a=mm.get(m.a),b=mm.get(m.b);
+      a.gf+=m.sa;b.gf+=m.sb;a.gd+=m.sa-m.sb;b.gd+=m.sb-m.sa;
+      if(m.sa>m.sb){a.pts+=P.win;b.pts+=P.loss;} else if(m.sa<m.sb){b.pts+=P.win;a.pts+=P.loss;} else {a.pts+=P.draw;b.pts+=P.draw;} }});
+    const out=new Map(); mm.forEach((v,id)=>out.set(id,v.pts*1e6+(v.gd+1000)*1e3+v.gf)); return out;
+  };
+  const key=(c,r,ctx)=>c==='pts'?r.Pts:c==='gd'?r.GD:c==='gf'?r.GF:c==='w'?r.W:(ctx.get(r.id)||0);
+  const sortGroup=(group,cs)=>{
+    if(group.length<2||!cs.length) return [group];
+    const c=cs[0],rest=cs.slice(1),ctx=c==='h2h'?h2h(group):null;
+    const vals=new Map(group.map(r=>[r.id,key(c,r,ctx)]));
+    const sorted=group.slice().sort((x,y)=>vals.get(y.id)-vals.get(x.id));
+    const buckets=[];
+    sorted.forEach(r=>{const last=buckets[buckets.length-1]; if(last&&vals.get(last[0].id)===vals.get(r.id)) last.push(r); else buckets.push([r]);});
+    return buckets.reduce((acc,b)=>acc.concat(sortGroup(b,rest)),[]);
+  };
+  const groups=sortGroup(rows,L.tiebreak&&L.tiebreak.length?L.tiebreak:['pts','gd','gf','h2h']);
+  let pos=1; const out=[];
+  groups.forEach(g=>{g.forEach(r=>{r.rank=pos;r.tied=g.length>1;out.push(r);});pos+=g.length;});
+  return out;
+};
+E.koRanking=L=>{
+  const rounds=E.koRounds(L),R=rounds.length-1,champ=rounds[R][0],res=[];
+  if(typeof champ==='string') res.push({id:champ,rank:1,label:'البطل'});
+  for(let r=R-1;r>=0;r--){
+    const ms=L.matches.filter(m=>m.ko&&m.ko.r===r&&m.status==='done');
+    const rank=res.length+1;
+    ms.forEach(m=>res.push({id:E.loser(m),rank,label:r===R-1?'الوصيف':'خرج من '+roundName(r,R)}));
+  }
+  const seen=new Set(res.map(x=>x.id));
+  const alive=L.participants.filter(p=>!seen.has(p.id)).map(p=>({id:p.id,rank:1,label:'ما زال في المنافسة',alive:true}));
+  return alive.length&&typeof champ!=='string'?alive.concat(res.map(x=>Object.assign({},x,{rank:x.rank+alive.length}))):res;
+};
+E.validate=(L,m)=>{
+  const errs=[];
+  ['a','b'].forEach(s=>{
+    const sc=m['s'+s],p=part(L,m[s]);
+    if(!Number.isInteger(sc)||sc<0||sc>99) errs.push('النتيجة يجب أن تكون عدداً صحيحاً بين 0 و99.');
+    const ev=m.events.filter(e=>e.side===s);
+    if(ev.length>sc) errs.push(`مسجَّل ${ev.length} من الأهداف بأسماء لاعبي «${p?p.name:''}» بينما نتيجته ${sc}. احذف هدفاً من الإحصائيات أو عدّل النتيجة.`);
+    ev.forEach(e=>{
+      if(!p||!p.players.some(x=>x.id===e.scorer)) errs.push('اختر صاحب كل هدف في الإحصائيات.');
+      if(e.assist&&e.assist===e.scorer&&!L.selfAssist) errs.push('لا تُحتسب التمريرة الحاسمة لصاحب الهدف نفسه. غيّر صانع الهدف أو اختر «بدون تمريرة».');
+      if(e.assist&&p&&!p.players.some(x=>x.id===e.assist)) errs.push('صانع أحد الأهداف لم يعد موجوداً في الفريق.');
+    });
+  });
+  if(L.format==='ko'&&m.sa===m.sb&&m.pk!==m.a&&m.pk!==m.b) errs.push('النتيجة تعادل في خروج المغلوب: اختر المتأهل بركلات الترجيح.');
+  return errs.filter((x,i,a)=>a.indexOf(x)===i);
+};
+/* in individual leagues a participant is a single player, so goals can be attributed with certainty */
+E.autoAttribute=(L,m)=>{
+  ['a','b'].forEach(s=>{
+    const p=part(L,m[s]); if(!p||L.type!=='individual'||!p.players.some(x=>x.id==='self')) return;
+    const self='self', sc=m['s'+s];
+    let ev=m.events.filter(e=>e.side===s);
+    while(ev.length>sc){const auto=ev.filter(e=>e.auto&&!e.assist); const rm=auto.length?auto[auto.length-1]:null; if(!rm) break; m.events.splice(m.events.indexOf(rm),1); ev=m.events.filter(e=>e.side===s);}
+    while(ev.length<sc){m.events.push({id:uid(),side:s,scorer:self,assist:'',auto:true}); ev=m.events.filter(e=>e.side===s);}
+  });
+};
+E.playerStats=L=>{
+  const map=new Map();
+  const pl=(pid,plid)=>{const k=pid+'|'+plid; if(!map.has(k)){const p=part(L,pid),x=p&&p.players.find(y=>y.id===plid); map.set(k,{key:k,pid,plid,name:x?x.name:'لاعب محذوف',team:p?p.name:'',G:0,A:0,matches:[]});} return map.get(k);};
+  L.participants.forEach(p=>p.players.forEach(x=>pl(p.id,x.id)));
+  let total=0,attr=0; const incomplete=new Set();
+  L.matches.filter(m=>m.status==='done').forEach(m=>{
+    ['a','b'].forEach(s=>{
+      const pid=m[s],sc=m['s'+s],ev=m.events.filter(e=>e.side===s);
+      total+=sc; attr+=Math.min(ev.length,sc); const complete=ev.length>=sc; if(!complete) incomplete.add(pid);
+      const per=new Map();
+      ev.forEach(e=>{const r=pl(pid,e.scorer);r.G++;const v=per.get(r.key)||{g:0,a:0};v.g++;per.set(r.key,v);
+        if(e.assist){const ra=pl(pid,e.assist);ra.A++;const va=per.get(ra.key)||{g:0,a:0};va.a++;per.set(ra.key,va);}});
+      const p=part(L,pid);
+      (p?p.players:[]).forEach(x=>{const r=pl(pid,x.id),v=per.get(r.key)||{g:0,a:0};r.matches.push({mid:m.id,opp:m[s==='a'?'b':'a'],gf:sc,ga:m[s==='a'?'sb':'sa'],g:v.g,a:v.a,complete});});
+    });
+  });
+  return {players:[...map.values()],total,attr,incomplete};
+};
+
+E.parseNames=txt=>{
+  const out=[];String(txt||'').split(/[\n\r,،؛;\t]+/).map(x=>x.replace(/^\s*\d+\s*[-.)]\s*/,'').trim()).forEach(x=>{if(x&&x.length<=30&&out.indexOf(x)<0)out.push(x);});
+  return out;
+};
+E.normalizeLeague=(L,t)=>{
+  if(!L||typeof L!=='object'||!Array.isArray(L.participants)||!Array.isArray(L.matches)||L.participants.length<2) return null;
+  const ids=new Set(L.participants.map(p=>p&&p.id));
+  if(ids.size!==L.participants.length||[...ids].some(x=>typeof x!=='string')) return null;
+  const n=Object.assign({},L);
+  n.name=String(L.name||'دوري مستورد').slice(0,40);
+  n.type=L.type==='teams'?'teams':'individual';
+  n.format=['single','double','ko'].indexOf(L.format)>=0?L.format:'single';
+  n.points=Object.assign({win:3,draw:1,loss:0},L.points||{});
+  n.matchMin=Number(L.matchMin)>0?Number(L.matchMin):5; n.breakMin=Number(L.breakMin)>=0?Number(L.breakMin):1;
+  n.tiebreak=Array.isArray(L.tiebreak)&&L.tiebreak[0]==='pts'?L.tiebreak:['pts','gd','gf','h2h','w'];
+  n.adjust=L.adjust!==false; n.selfAssist=!!L.selfAssist; n.goalPrompt=L.goalPrompt!==false; n.pin=typeof L.pin==='string'?L.pin:'';
+  n.participants=L.participants.map(p=>({id:p.id,name:String(p.name||'—').slice(0,30),players:Array.isArray(p.players)?p.players.filter(x=>x&&x.id).map(x=>({id:String(x.id),name:String(x.name||'—').slice(0,30)})):[]}));
+  n.byes=L.byes&&typeof L.byes==='object'?L.byes:{};
+  n.matches=L.matches.filter(m=>m&&(ids.has(m.a)||m.a===null)&&(ids.has(m.b)||m.b===null)).map(m=>{
+    const x=Object.assign({},m);
+    x.sa=Math.max(0,parseInt(m.sa,10)||0); x.sb=Math.max(0,parseInt(m.sb,10)||0);
+    x.events=Array.isArray(m.events)?m.events.filter(e=>e&&(e.side==='a'||e.side==='b')):[];
+    if(['pending','live','paused','scoring','done','cancelled'].indexOf(x.status)<0) x.status='pending';
+    if(x.status==='live'){x.remaining=Math.max(1000,(m.endAt||t)-t);x.endAt=null;x.status='paused';}
+    return x;
+  });
+  if(n.phase&&n.phase.kind==='break'){n.phase={kind:'ready'};}
+  if(!n.phase) n.phase={kind:'idle'};
+  if(n.status==='paused'||n.status==='done'||n.status==='running'){} else n.status='running';
+  n.createdAt=Number(L.createdAt)||t;
+  return n;
+};
+E.parseImport=(txt,existingIds,t)=>{
+  if(!txt) return {error:'اختر ملفاً أو الصق البيانات أولاً.'};
+  let d; try{d=JSON.parse(txt);}catch(e){return {error:'هذا ليس ملف نسخة احتياطية صالحاً. تأكد أنه ملف ‎.json صادر من «دوري الملعب».'};}
+  let list=Array.isArray(d)?d:Array.isArray(d.leagues)?d.leagues:d.league?[d.league]:(d.participants?[d]:null);
+  if(!list||!list.length) return {error:'لم نجد أي دوري داخل البيانات.'};
+  const taken=new Set(existingIds),out=[];let bad=0;
+  list.forEach(L=>{const n=E.normalizeLeague(L,t);if(!n){bad++;return;}
+    if(!n.id||taken.has(n.id)){n.id=Math.random().toString(36).slice(2,10);if(existingIds.indexOf(L.id)>=0)n.name=n.name+' (مستورد)';}
+    taken.add(n.id);out.push(n);});
+  if(!out.length) return {error:'البيانات ناقصة أو تالفة، ولم يُستورد أي دوري.'};
+  return {leagues:out,skipped:bad};
+};
+
+/* ---------------- model helpers ---------------- */
+function newMatch(a,b,extra){return Object.assign({id:uid(),a,b,status:'pending',sa:0,sb:0,pk:null,events:[],dur:null,endAt:null,remaining:null,leftMs:null,startedAt:null,finishedAt:null},extra||{});}
+const cur=()=>DB.leagues.find(l=>l.id===DB.currentId)||null;
+const part=(L,id)=>L.participants.find(p=>p.id===id);
+const pname=(L,id)=>{if(id===null)return 'تأهل مباشر';if(id===undefined)return 'يُحدَّد لاحقاً';const p=part(L,id);return p?p.name:'—';};
+const byId=(L,id)=>L.matches.find(m=>m.id===id);
+const ACTIVE=['live','paused','scoring'];
+const active=L=>L.matches.find(m=>ACTIVE.indexOf(m.status)>=0)||null;
+const pend=L=>L.matches.filter(m=>m.status==='pending');
+const started=L=>L.matches.some(m=>m.status!=='pending'&&m.status!=='cancelled');
+function leagueState(L){if(L.status==='done')return 'done';if(L.status==='paused')return 'paused';return started(L)?'running':'idle';}
+function curMatch(L){return active(L)||pend(L)[0]||null;}
+function nextMatch(L){const a=active(L),p=pend(L);return a?(p[0]||null):(p[1]||null);}
+function totals(L){
+  if(L.format==='ko'){const t=Math.max(0,L.participants.length-1),d=L.matches.filter(m=>m.status==='done').length;return {total:t,done:d,left:t-d};}
+  const v=L.matches.filter(m=>m.status!=='cancelled'),d=v.filter(m=>m.status==='done').length;return {total:v.length,done:d,left:v.length-d};
+}
+function phase(L){
+  const a=active(L); if(a) return {k:a.status,m:a};
+  const p=pend(L)[0]; if(!p) return {k:'none',m:null};
+  if(L.phase&&L.phase.kind==='break') return {k:'break',m:p};
+  if(L.phase&&L.phase.kind==='ready') return {k:'ready',m:p};
+  return {k:'idle',m:p};
+}
+function roundName(r,R){const left=R-r;return left===1?'النهائي':left===2?'نصف النهائي':left===3?'ربع النهائي':'دور الـ'+Math.pow(2,left);}
+function roundLabel(L,m){
+  if(L.format==='ko'&&m.ko) return roundName(m.ko.r,Math.round(Math.log2(L.ko.size)));
+  if(m.extra) return 'مباراة إضافية';
+  if(!m.round) return '';
+  if(m.extraRound) return 'الجولة '+m.round+' · دور إضافي';
+  return 'الجولة '+m.round+(L.format==='double'?(m.leg===2?' · الإياب':' · الذهاب'):'');
+}
+function matchRemaining(L,m){
+  if(!m) return 0;
+  if(m.status==='live') return Math.max(0,m.endAt-now());
+  if(m.status==='paused') return Math.max(0,m.remaining||0);
+  if(m.status==='scoring'||m.status==='done') return 0;
+  return Math.round(L.matchMin*60000);
+}
+function breakRemaining(L){const ph=L.phase;if(!ph||ph.kind!=='break')return 0;return ph.endAt?Math.max(0,ph.endAt-now()):Math.max(0,ph.remaining||0);}
+function moveToNext(L,m){
+  const i=L.matches.indexOf(m); L.matches.splice(i,1);
+  let j=L.matches.findIndex(x=>x.status==='pending'); if(j<0) j=L.matches.length;
+  L.matches.splice(j,0,m);
+}
+function buildSchedule(L,starter){
+  const ids=L.participants.map(p=>p.id); L.byes={};
+  if(L.format==='ko'){
+    let size=1; while(size<ids.length) size*=2;
+    L.ko={size,slots:E.seedOrder(size).map(s=>s<=ids.length?ids[s-1]:null)}; L.matches=[]; E.koSync(L);
+    if(starter){const m=L.matches.find(x=>x.a===starter||x.b===starter); if(m) moveToNext(L,m);}
+    return;
+  }
+  const rr=E.roundRobin(ids,L.format==='double'?2:1); L.byes=rr.byes;
+  L.matches=E.arrange(rr.matches,starter).map(x=>newMatch(x.a,x.b,{round:x.round,leg:x.leg}));
+}
+const matchCount=(n,f)=>n<2?0:f==='ko'?n-1:f==='double'?n*(n-1):n*(n-1)/2;
+
+/* ---------------- sound, vibration, wake lock ---------------- */
+let actx=null;
+function unlockAudio(){try{if(!actx){const C=window.AudioContext||window.webkitAudioContext;if(C)actx=new C();}if(actx&&actx.state==='suspended')actx.resume();}catch(e){}}
+function whistle(t0,dur){
+  const o=actx.createOscillator(),g=actx.createGain(),lfo=actx.createOscillator(),lg=actx.createGain();
+  o.type='sine';o.frequency.value=2850;lfo.frequency.value=26;lg.gain.value=140;
+  lfo.connect(lg);lg.connect(o.frequency);o.connect(g);g.connect(actx.destination);
+  g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime(0.32,t0+0.02);
+  g.gain.setValueAtTime(0.32,t0+dur-0.05);g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.start(t0);lfo.start(t0);o.stop(t0+dur+0.05);lfo.stop(t0+dur+0.05);
+}
+function beep(t0,f,dur){const o=actx.createOscillator(),g=actx.createGain();o.type='triangle';o.frequency.value=f;o.connect(g);g.connect(actx.destination);g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime(0.4,t0+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);o.start(t0);o.stop(t0+dur+0.03);}
+function alarm(kind){
+  if(DB.prefs.vibrate){try{navigator.vibrate&&navigator.vibrate(kind==='end'?[400,120,400,120,800]:kind==='ready'?[250,120,250]:[120]);}catch(e){}}
+  if(!DB.prefs.sound) return;
+  try{ unlockAudio(); if(!actx) return; const t=actx.currentTime+0.03;
+    if(kind==='start') whistle(t,0.45);
+    else if(kind==='end'){whistle(t,0.28);whistle(t+0.4,0.28);whistle(t+0.8,1.1);}
+    else if(kind==='ready'){beep(t,880,0.18);beep(t+0.26,880,0.18);beep(t+0.52,1320,0.4);}
+    else if(kind==='win'){[523,659,784,1047].forEach((f,i)=>beep(t+i*0.16,f,0.3));}
+  }catch(e){}
+}
+let wakeLock=null;
+async function keepAwake(on){
+  try{
+    if(on){ if(!wakeLock&&navigator.wakeLock&&document.visibilityState==='visible'){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null;});} }
+    else if(wakeLock){const w=wakeLock;wakeLock=null;await w.release();}
+  }catch(e){wakeLock=null;}
+}
+function syncWake(){const L=cur();const need=!!(L&&L.status!=='paused'&&((active(L)&&active(L).status==='live')||(L.phase&&L.phase.kind==='break')));keepAwake(need);}
+
+/* ---------------- install (PWA) ---------------- */
+let deferredInstall=null;
+const IS_STANDALONE=()=>{try{return matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone===true;}catch(e){return false;}};
+const IS_IOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const CAN_SW=IS_TOP&&'serviceWorker' in navigator&&/^https?:$/.test(location.protocol);
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;try{render();}catch(x){}});
+window.addEventListener('appinstalled',()=>{deferredInstall=null;toast('تم تثبيت التطبيق على جهازك');try{render();}catch(x){}});
+if(CAN_SW){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
+function canOfferInstall(){return !IS_STANDALONE()&&(!!deferredInstall||(IS_IOS&&IS_TOP));}
+function installBanner(){
+  if(!canOfferInstall()||DB.prefs.installHide) return '';
+  return `<div class="banner install"><div><b>ثبّت دوري الملعب على جهازك</b><p class="small muted">يفتح كتطبيق بملء الشاشة ويعمل بدون إنترنت في الملعب.</p></div><div class="row"><button class="btn btn-primary" data-act="install">${ic('download')} تثبيت</button><button class="icon-btn" data-act="installHide" aria-label="إخفاء">${ic('x')}</button></div></div>`;
+}
+const actInstallHide=()=>{DB.prefs.installHide=true;commit();};
+const actInstall=async()=>{
+  if(deferredInstall){const e=deferredInstall;deferredInstall=null;try{await e.prompt();const r=await e.userChoice;if(r&&r.outcome==='accepted')toast('جاري التثبيت…');}catch(x){}render();return;}
+  ui.sheet={type:'install'};renderSheet();
+};
+function installSheet(){
+  let body;
+  if(IS_STANDALONE()) body=`<div class="note ok">التطبيق مثبّت ويعمل الآن كتطبيق مستقل.</div>`;
+  else if(!IS_TOP) body=`<p>هذه نسخة معاينة داخل صفحة أخرى، والمتصفح لا يسمح بتثبيتها من هنا.</p><div class="note">افتح رابط التطبيق المستضاف مباشرة في المتصفح (Chrome أو Safari)، وسيظهر لك زر «تثبيت».</div>`;
+  else if(IS_IOS) body=`<ol class="steps-list"><li>افتح الصفحة في <b>Safari</b>.</li><li>اضغط زر <b>المشاركة</b> (المربع والسهم للأعلى).</li><li>اختر <b>إضافة إلى الشاشة الرئيسية</b> ثم <b>إضافة</b>.</li></ol><p class="hint">ستظهر أيقونة «دوري الملعب» وتفتح بملء الشاشة.</p>`;
+  else body=`<ol class="steps-list"><li><b>Android (Chrome):</b> القائمة ⋮ ثم <b>تثبيت التطبيق</b> أو «إضافة إلى الشاشة الرئيسية».</li><li><b>الكمبيوتر (Chrome أو Edge):</b> أيقونة التثبيت في شريط العنوان، أو القائمة ثم <b>تثبيت دوري الملعب</b>.</li><li><b>Mac (Safari):</b> ملف ثم <b>إضافة إلى Dock</b>.</li></ol><p class="hint">إذا لم يظهر خيار التثبيت، أعد تحميل الصفحة مرة واحدة ثم حاول.</p>`;
+  return `<div class="sheet-head"><h3>${ic('download')} تثبيت التطبيق</h3><button class="icon-btn" data-act="closeSheet" aria-label="إغلاق">${ic('x')}</button></div>${body}`;
+}
+
+/* ---------------- theme ---------------- */
+function applyTheme(){
+  const t=DB.prefs.theme;
+  if(t==='light'||t==='dark') ROOT.setAttribute('data-theme',t);
+  else if(HOST_THEME) ROOT.setAttribute('data-theme',HOST_THEME); else ROOT.removeAttribute('data-theme');
+  if(DB.prefs.accent&&DB.prefs.accent!=='green') ROOT.setAttribute('data-accent',DB.prefs.accent); else ROOT.removeAttribute('data-accent');
+}
+
+/* ---------------- rendering ---------------- */
+const app=$('#app');
+function commit(re){save();if(re!==false)render();}
+function toast(msg){ui.toast=msg;renderToast();clearTimeout(toast._t);toast._t=setTimeout(()=>{ui.toast=null;renderToast();},2800);}
+function renderToast(){$('#toast-root').innerHTML=ui.toast?`<div class="toast" role="status">${esc(ui.toast)}</div>`:'';}
+function go(v){ui.view=v;DB.view=v;ui.sheet=null;save();render();try{window.scrollTo(0,0);}catch(e){}}
+
+function render(){
+  applyTheme();
+  const L=cur(); let v=ui.view;
+  if(!L&&['setup','history','home'].indexOf(v)<0) v='home';
+  if(v==='champion'&&L&&L.status!=='done') v='home';
+  const fn=VIEWS[v]||VIEWS.home;
+  app.innerHTML=header(L,v)+`<main class="main" id="main">${storageOK?'':`<div class="note warn">تعذّر الحفظ على هذا الجهاز (التخزين مغلق أو ممتلئ). البيانات ستبقى ما دامت الصفحة مفتوحة فقط.</div>`}${fn(L)}</main>`+nav(L,v);
+  renderSheet(); renderGoal(); renderFlash(); renderToast();
+  paintTimers();
+  if(v==='champion'&&ui.celebrate){ui.celebrate=false;confetti();}
+}
+function header(L,v){
+  return `<header class="top"><div class="top-in">
+  <button class="brand" data-act="go" data-v="home" aria-label="الرئيسية"><span class="logo">${ic('ball')}</span><span class="brand-t"><b>${esc(L?L.name:'دوري الملعب')}</b><small>${L?STATE_LABEL[leagueState(L)]+' · '+FORMAT_LABEL[L.format]:'إدارة دوريات الطلاب'}</small></span></button>
+  <div class="top-act">
+   ${canOfferInstall()?`<button class="icon-btn" data-act="install" aria-label="تثبيت التطبيق" title="تثبيت التطبيق">${ic('download')}</button>`:''}
+   <button class="icon-btn" data-act="go" data-v="history" aria-label="كل الدوريات" title="كل الدوريات" ${v==='history'?'aria-current="page"':''}>${ic('history')}</button>
+   <button class="icon-btn" data-act="go" data-v="manage" aria-label="الإدارة والإعدادات" title="الإدارة والإعدادات" ${v==='manage'?'aria-current="page"':''} ${L?'':'disabled'}>${ic('gear')}</button>
+  </div></div></header>`;
+}
+function nav(L,v){
+  const items=[['home','الرئيسية','home'],['match','المباراة','timer'],['schedule','المباريات','list'],['standings','الترتيب','table'],['stats','الإحصائيات','chart']];
+  const live=L&&active(L)&&active(L).status==='live';
+  return `<nav class="nav" aria-label="التنقل"><div class="nav-in">${items.map(([k,t,i])=>`<button data-act="go" data-v="${k}" ${v===k?'aria-current="page"':''} ${!L&&k!=='home'?'disabled':''}>${ic(i)}<span>${t}</span>${k==='match'&&live?'<i class="dot"></i>':''}</button>`).join('')}</div></nav>`;
+}
+function pausedBanner(L){return L.status==='paused'?`<div class="banner"><div><b>الدوري متوقف مؤقتاً</b><p class="small muted">المؤقتات متوقفة، ولن تبدأ أي مباراة قبل الاستئناف.</p></div><button class="btn btn-primary" data-act="resumeLeague">${ic('play')} استئناف الدوري</button></div>`:'';}
+
+/* ---- home ---- */
+function vHome(L){
+  if(!L) return `<section class="hero">${PITCH_LINES}
+   <span class="eyebrow">ملعب واحد · مباراة واحدة في كل مرة</span>
+   <h1>نظّم دوري الطلاب من الهاتف</h1>
+   <p>اكتب أسماء المشاركين، واضغط «إنشاء الدوري». يرتّب التطبيق المباريات، ويدير وقت كل مباراة والاستراحة، ويحسب النقاط ويعلن البطل.</p>
+   <div class="steps"><div><b>١. المشاركون</b>أي عدد، أفراد أو فرق</div><div><b>٢. المؤقت</b>صافرة عند نهاية الوقت</div><div><b>٣. الترتيب</b>يتحدث بعد كل نتيجة</div></div>
+   <button class="btn btn-chalk btn-xl" data-act="newLeague">${ic('plus')} إنشاء دوري جديد</button>
+  </section>
+  ${installBanner()}
+  <button class="btn btn-wide" data-act="importOpen">${ic('upload')} استيراد دوري من ملف</button>
+  ${DB.leagues.length?`<button class="btn btn-wide" data-act="go" data-v="history">${ic('history')} الدوريات السابقة (${DB.leagues.length})</button>`:''}`;
+  const st=leagueState(L),t=totals(L),nm=nextMatch(L);
+  let out=pausedBanner(L);
+  if(st==='done') out+=`<section class="champ">${PITCH_LINES}${TROPHY}<span class="eyebrow">${L.endedManually?'أُنهي الدوري يدوياً':'انتهى الدوري'}</span><h1>${esc(headline(L))}</h1><button class="btn btn-chalk btn-xl" data-act="go" data-v="champion">${ic('trophy')} شاشة التتويج والترتيب النهائي</button></section>`;
+  else out+=liveCard(L);
+  out+=`<div class="kpis"><div class="kpi"><b>${L.participants.length}</b><span>المشاركون</span></div><div class="kpi"><b>${t.total}</b><span>المباريات الكلية</span></div><div class="kpi"><b>${t.done}</b><span>المكتملة</span></div><div class="kpi"><b>${t.left}</b><span>المتبقية</span></div></div>`;
+  if(nm&&st!=='done') out+=`<div class="card"><div class="sec-head"><h3>المباراة القادمة</h3><span class="chip">${matchLabel(L.matches.indexOf(nm))}</span></div><div class="mt"><b>${esc(pname(L,nm.a))}</b><span class="vs">ضد</span><b>${esc(pname(L,nm.b))}</b></div></div>`;
+  if(L.format!=='ko'&&t.done){
+    const tb=E.table(L).slice(0,3);
+    out+=`<div class="card"><div class="sec-head"><h3>${st==='done'?'الترتيب النهائي':'المتصدرون الآن'}</h3><button class="btn btn-sm" data-act="go" data-v="standings">الجدول كاملاً</button></div><div class="lb">${tb.map(r=>`<div class="lb-row"><span class="rank">${r.rank}</span><span class="who"><span>${esc(r.name)}</span><small>لعب ${r.P} · فارق ${r.GD>0?'+':''}${r.GD}</small></span><b>${r.Pts}</b></div>`).join('')}</div></div>`;
+  }
+  const tops=topScorers(L,5);
+  if(tops.length) out+=`<div class="card"><div class="sec-head"><h3>الهدافون</h3><button class="btn btn-sm" data-act="go" data-v="stats">كل الإحصائيات</button></div><div class="lb">${tops.map(r=>`<div class="lb-row"><span class="rank">${r.rk}</span><span class="who"><span>${esc(r.name)}</span><small>${L.type==='teams'||r.team!==r.name?esc(r.team)+' · ':''}${r.A} أسيست</small></span><b>${r.G}</b></div>`).join('')}</div></div>`;
+  out+=installBanner();
+  out+=`<div class="quick">
+   <button class="btn" data-act="go" data-v="standings">${ic('table')} جدول الترتيب</button>
+   <button class="btn" data-act="go" data-v="schedule">${ic('list')} جدول المباريات</button>
+   <button class="btn" data-act="go" data-v="stats">${ic('chart')} إحصائيات اللاعبين</button>
+   <button class="btn" data-act="go" data-v="manage">${ic('users')} المشاركون والإعدادات</button>
+   <button class="btn" data-act="newLeague">${ic('plus')} دوري جديد</button>
+  </div>`;
+  return out;
+}
+function topScorers(L,n){
+  const arr=E.playerStats(L).players.filter(r=>r.G>0).sort((a,b)=>b.G-a.G||b.A-a.A);
+  arr.forEach(r=>{r.rk=arr.findIndex(x=>x.G===r.G)+1;});
+  return arr.slice(0,n);
+}
+function headline(L){
+  if(L.format==='ko'){const r=E.koRanking(L);const c=r.find(x=>x.rank===1&&!x.alive);return c?'البطل: '+pname(L,c.id):'لم يُحسم اللقب';}
+  const tb=E.table(L),top=tb.filter(r=>r.rank===1);
+  if(!tb.length) return '';
+  const names=top.map(r=>r.name).join(' و ');
+  if(L.endedManually) return 'المتصدر: '+names;
+  return (top.length>1?'تعادل على اللقب: ':'البطل: ')+names;
+}
+function liveCard(L){
+  const ph=phase(L),m=ph.m;
+  if(ph.k==='none') return `<div class="card"><h3>لا توجد مباريات متبقية</h3><p class="muted">كل المباريات المتبقية ملغاة. يمكنك استعادة مباراة من جدول المباريات أو إنهاء الدوري من الإدارة.</p></div>`;
+  const LBL={live:'المباراة جارية',paused:'متوقفة مؤقتاً',scoring:'بانتظار تسجيل النتيجة',break:'استراحة بين المباريات',ready:'المباراة التالية جاهزة',idle:'جاهزون لصافرة البداية'};
+  let clock;
+  if(ph.k==='break') clock=`<div class="clock sm" data-clock="break">${fmt(breakRemaining(L))}</div>`;
+  else clock=`<div class="clock sm ${ph.k==='scoring'?'zero':''}" ${ACTIVE.indexOf(ph.k)>=0?'data-clock="match"':''}>${fmt(matchRemaining(L,m))}</div>`;
+  const score=ACTIVE.indexOf(ph.k)>=0?`<span class="sc">${sc2(m.sa,m.sb)}</span>`:'<span>ضد</span>';
+  let btn;
+  if(ph.k==='idle'||ph.k==='ready') btn=`<button class="btn btn-chalk btn-xl" data-act="start" ${L.status==='paused'?'disabled':''}>${ic('play')} ${ph.k==='ready'?'بدء المباراة التالية':'بدء المباراة'}</button>`;
+  else if(ph.k==='paused') btn=`<button class="btn btn-chalk btn-xl" data-act="resume" ${L.status==='paused'?'disabled':''}>${ic('play')} استئناف المباراة</button>`;
+  else btn=`<button class="btn btn-chalk btn-xl" data-act="go" data-v="match">${ic('timer')} ${ph.k==='scoring'?'سجّل النتيجة':ph.k==='break'?'شاشة الاستراحة':'شاشة المباراة'}</button>`;
+  return `<section class="pitch">${PITCH_LINES}<div class="pitch-in">
+   <div class="pitch-top"><span class="state-chip ${ph.k==='live'?'live':''}"><i></i>${LBL[ph.k]}</span><span class="eyebrow">${ph.k==='break'?'التالية: ':''}${matchLabel(L.matches.indexOf(m))}</span></div>
+   <div class="vs-line"><b>${esc(pname(L,m.a))}</b>${score}<b>${esc(pname(L,m.b))}</b></div>
+   ${clock}${btn}</div></section>`;
+}
+
+/* ---- match screen ---- */
+function vMatch(L){
+  if(L.status==='done') return `<div class="card"><h3>انتهى الدوري</h3><p class="muted">${esc(headline(L))}</p><button class="btn btn-primary" data-act="go" data-v="champion">${ic('trophy')} شاشة التتويج</button></div>`;
+  const ph=phase(L),t=totals(L);
+  if(ph.k==='none') return liveCard(L);
+  const m=ph.m,i=L.matches.indexOf(m),isAct=ACTIVE.indexOf(ph.k)>=0,locked=L.status==='paused';
+  const rest=L.byes&&m.round&&L.byes[m.round]?`<span class="chip">في استراحة هذه الجولة: ${esc(pname(L,L.byes[m.round]))}</span>`:'';
+  const doneCount=t.done;
+  let head=`<div class="sec-head"><div><span class="eyebrow">${esc(L.name)} · ${roundLabel(L,m)}</span><h2>${ph.k==='break'?'الاستراحة':matchLabel(i)} <span class="muted small num">(${Math.min(doneCount+1,t.total)} من ${t.total})</span></h2></div>${rest}</div>`;
+  let pitch, ctrl='';
+  const remain=matchRemaining(L,m), dur=m.dur||Math.round(L.matchMin*60000);
+  const stateChip={live:'<span class="state-chip live"><i></i>جارية</span>',paused:'<span class="state-chip"><i></i>متوقفة مؤقتاً</span>',scoring:'<span class="state-chip"><i></i>انتهى الوقت · سجّل النتيجة</span>',idle:'<span class="state-chip"><i></i>لم تبدأ</span>',ready:'<span class="state-chip"><i></i>جاهزة للبدء</span>',break:'<span class="state-chip"><i></i>استراحة</span>'}[ph.k];
+  if(ph.k==='break'){
+    const br=breakRemaining(L),tot=L.phase.total||1;
+    pitch=`<section class="pitch">${PITCH_LINES}<div class="pitch-in"><div class="pitch-top">${stateChip}<span class="eyebrow">التالية: ${matchLabel(i)}</span></div>
+     <div class="clock" data-clock="break">${fmt(br)}</div><div class="bar"><i data-prog="break" style="width:${Math.min(100,100*(1-br/tot))}%"></i></div>
+     <div class="vs-line"><b>${esc(pname(L,m.a))}</b><span>ضد</span><b>${esc(pname(L,m.b))}</b></div></div></section>`;
+    ctrl=`<div class="ctrl"><button class="btn btn-primary btn-xl" data-act="start" ${locked?'disabled':''}>${ic('play')} ابدأ المباراة التالية الآن</button>
+     <div class="ctrl-row"><button class="btn" data-act="skipBreak" ${locked?'disabled':''}>${ic('skip')} تخطي الاستراحة</button><button class="btn" data-act="extendBreak" ${locked?'disabled':''}>${ic('plus')} تمديد دقيقة</button></div>
+     ${lastResult(L)}</div>`;
+  } else {
+    pitch=`<section class="pitch">${PITCH_LINES}<div class="pitch-in"><div class="pitch-top">${stateChip}<span class="eyebrow num">مدة المباراة ${fmt(dur)}</span></div>
+     <div class="clock ${ph.k==='scoring'?'zero':(isAct&&remain<=60000?'low':'')}" ${isAct?'data-clock="match"':''}>${fmt(remain)}</div>
+     <div class="bar"><i ${isAct?'data-prog="match"':''} style="width:${isAct?Math.min(100,100*(1-remain/dur)):0}%"></i></div></div></section>`;
+    if(ph.k==='idle'||ph.k==='ready'){
+      ctrl=`<div class="ctrl"><div class="board"><div class="side"><div class="side-name">${esc(pname(L,m.a))}</div></div><div class="colon" style="padding-top:0">ضد</div><div class="side"><div class="side-name">${esc(pname(L,m.b))}</div></div></div>
+       <button class="btn btn-primary btn-xl" data-act="start" ${locked?'disabled':''}>${ic('play')} ${ph.k==='ready'?'بدء المباراة التالية':'بدء المباراة'}</button>
+       <p class="hint">الوقت لا يبدأ إلا بعد الضغط على الزر، حتى يكون اللاعبون مستعدين.</p>${lastResult(L)}</div>`;
+    } else {
+      const adj=L.adjust?`<div class="adj"><button class="btn" data-act="adj" data-ms="-60000">−1 د</button><button class="btn" data-act="adj" data-ms="-30000">−30 ث</button><button class="btn" data-act="adj" data-ms="30000">+30 ث</button><button class="btn" data-act="adj" data-ms="60000">+1 د</button></div>`:'';
+      let buttons='';
+      if(ph.k==='live') buttons=`<div class="ctrl-row"><button class="btn btn-ink btn-xl" data-act="pause">${ic('pause')} إيقاف</button><button class="btn btn-danger btn-xl" data-act="endEarly">${ic('stop')} إنهاء</button></div>${adj}`;
+      else if(ph.k==='paused') buttons=`<div class="ctrl-row"><button class="btn btn-primary btn-xl" data-act="resume" ${locked?'disabled':''}>${ic('play')} استئناف</button><button class="btn btn-danger btn-xl" data-act="endEarly">${ic('stop')} إنهاء</button></div>${adj}`;
+      else {
+        const errs=E.validate(L,previewAttr(L,m));
+        buttons=`${errs.length?`<div class="errs">${errs.map(e=>`<div><b>!</b> ${esc(e)}</div>`).join('')}</div>`:''}
+         <button class="btn btn-primary btn-xl" data-act="confirm" ${errs.length?'disabled':''}>${ic('check')} تأكيد النتيجة <span class="ltr">${sc2(m.sa,m.sb)}</span></button>
+         ${m.leftMs>0?`<button class="btn" data-act="undoEnd">${ic('replay')} أُنهيت بالخطأ؟ عودة للمباراة (${fmt(m.leftMs)})</button>`:''}`;
+      }
+      ctrl=`<div class="ctrl">${board(L,m,'live')}${koPk(L,m,'live')}${buttons}${goalLog(L,m,'live')}</div>`;
+    }
+  }
+  const nm=ph.k==='break'?pend(L)[1]:nextMatch(L);
+  const strip=`<div class="note">${nm?`بعدها: <b>${esc(pname(L,nm.a))}</b> ضد <b>${esc(pname(L,nm.b))}</b>`:'هذه آخر مباراة متاحة حالياً.'}</div>`;
+  return pausedBanner(L)+head+`<div class="match-grid"><div class="stack">${pitch}${strip}</div><div class="stack">${ctrl}</div></div>`;
+}
+function lastResult(L){
+  const d=L.matches.filter(m=>m.status==='done').sort((a,b)=>(b.finishedAt||0)-(a.finishedAt||0))[0];
+  return d?`<div class="note ok">آخر نتيجة: <b>${esc(pname(L,d.a))} <span class="ltr">${sc2(d.sa,d.sb)}</span> ${esc(pname(L,d.b))}</b></div>`:'';
+}
+function board(L,m,t){
+  const side=s=>`<div class="side"><div class="side-name">${esc(pname(L,m[s]))}</div><div class="score-big" aria-live="polite">${m['s'+s]}</div>
+   <div class="stepper"><button data-act="sc" data-t="${t}" data-s="${s}" data-d="-1" aria-label="إنقاص هدف" ${m['s'+s]<=0?'disabled':''}>${ic('minus')}</button><button class="plus" data-act="sc" data-t="${t}" data-s="${s}" data-d="1" aria-label="إضافة هدف">${ic('plus')}</button></div></div>`;
+  return `<div class="board">${side('a')}<div class="colon">:</div>${side('b')}</div>`;
+}
+function koPk(L,m,t){
+  if(L.format!=='ko'||m.sa!==m.sb) return '';
+  return `<div class="pk"><b>تعادل: من تأهل بركلات الترجيح؟</b><div class="row">${['a','b'].map(s=>`<button class="btn grow" data-act="pk" data-t="${t}" data-p="${m[s]}" aria-pressed="${m.pk===m[s]}">${esc(pname(L,m[s]))}</button>`).join('')}</div></div>`;
+}
+function previewAttr(L,m){const c=clone(m);E.autoAttribute(L,c);return c;}
+function goalLog(L,m,t){
+  const prompt=L.goalPrompt!==false;
+  const sideHtml=s=>{
+    const p=part(L,m[s]),ev=m.events.filter(e=>e.side===s),sc=m['s'+s],missing=Math.max(0,sc-ev.length);
+    const pn=id=>{const x=p.players.find(y=>y.id===id);return x?x.name:'لاعب محذوف';};
+    const selfName=L.type==='individual'&&p.players.some(x=>x.id==='self');
+    return `<div class="st-side"><h4><span>${esc(p.name)}</span><span class="chip ${missing&&!selfName?'warn':'ok'} num">${sc} ${sc===1?'هدف':'أهداف'}</span></h4>
+     ${ev.map(e=>`<div class="goal"><span class="gno">${ic('ball')}</span><button class="goal-main" data-act="goalEdit" data-t="${t}" data-id="${e.id}" aria-label="تعديل الهدف"><b>${esc(pn(e.scorer))}</b>${e.assist?`<small>${ic('assist')} أسيست: ${esc(pn(e.assist))}</small>`:'<small>بدون أسيست</small>'}</button><button class="icon-btn" data-act="goalDel" data-t="${t}" data-id="${e.id}" aria-label="حذف الهدف">${ic('trash')}</button></div>`).join('')}
+     ${Array.from({length:missing},()=>`<button class="goal goal-unk" data-act="goalAssign" data-t="${t}" data-s="${s}"><span class="gno">${ic('ball')}</span><span class="goal-main"><b>هدف بدون اسم</b><small>${selfName?'سيُحسب لـ '+esc(p.name)+' · ':''}اضغط لإضافة الهداف والأسيست</small></span></button>`).join('')}
+    </div>`;
+  };
+  return `<div class="stats-box"><h3 class="gl-title">${ic('ball')} الأهداف والهدافون</h3>
+   <label class="chk" style="padding:0"><input type="checkbox" id="gp-${t}" data-in="set.goalPrompt" ${prompt?'checked':''}><span>عند كل هدف: اسأل عن اسم الهداف وصاحب الأسيست</span></label>
+   ${m.sa+m.sb?sideHtml('a')+sideHtml('b'):'<p class="hint">لا أهداف بعد. اضغط + تحت اسم الفريق عند تسجيل هدف.</p>'}</div>`;
+}
+function renderGoal(){
+  const root=$('#goal-root'),g=ui.goal,L=cur();
+  if(!g||!L){root.innerHTML='';return;}
+  const m=tgt(g.t); if(!m){ui.goal=null;root.innerHTML='';return;}
+  const p=part(L,m[g.side]);
+  const chips=f=>p.players.filter(x=>f==='scorer'||L.selfAssist||x.id!==g.scorer).map(x=>`<button data-act="gPick" data-f="${f}" data-id="${x.id}" aria-pressed="${g[f]===x.id}">${esc(x.name)}</button>`).join('');
+  const title=g.mode==='edit'?'تعديل الهدف':'هدف لـ '+p.name;
+  root.innerHTML=`<div class="sheet-ov goal-ov" data-act="gOv"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+   <div class="sheet-head"><h3>${esc(title)}</h3><button class="icon-btn" data-act="gClose" aria-label="إغلاق">${ic('x')}</button></div>
+   <div class="stack"><span class="lbl">من سجّل الهدف؟</span>
+    ${p.players.length?`<div class="seg pick">${chips('scorer')}</div>`:'<p class="hint">اكتب اسم اللاعب، وسيُحفظ لباقي المباريات.</p>'}
+    <div class="row"><input type="text" id="g-new-scorer" placeholder="اسم لاعب جديد" maxlength="30" autocomplete="off" enterkeyhint="done" style="flex:1 1 150px"><button class="btn btn-sm" data-act="gNew" data-f="scorer">${ic('plus')} إضافة</button></div></div>
+   <div class="stack"><span class="lbl">من صنع الهدف (أسيست)؟</span>
+    <div class="seg pick"><button data-act="gPick" data-f="assist" data-id="" aria-pressed="${!g.assist}">بدون أسيست</button>${chips('assist')}</div>
+    <div class="row"><input type="text" id="g-new-assist" placeholder="اسم لاعب جديد" maxlength="30" autocomplete="off" enterkeyhint="done" style="flex:1 1 150px"><button class="btn btn-sm" data-act="gNew" data-f="assist">${ic('plus')} إضافة</button></div></div>
+   <button class="btn btn-primary btn-xl" data-act="gSave" ${g.scorer?'':'disabled'}>${ic('check')} ${g.mode==='edit'?'حفظ التعديل':'تسجيل الهدف'}</button>
+   ${g.mode==='new'?`<button class="btn" data-act="gNoName">تسجيل الهدف بدون اسم</button>`:''}
+  </div></div>`;
+}
+/* ---- schedule ---- */
+function vSchedule(L){
+  const t=totals(L),cm=L.status==='done'?null:curMatch(L),nm=L.status==='done'?null:nextMatch(L);
+  let out=`<div class="sec-head"><h2>جدول المباريات</h2><span class="chip num">${t.done} من ${t.total} مكتملة</span></div>`;
+  if(L.format!=='ko') out+=`<button class="btn" data-act="addMatches">${ic('plus')} إضافة مباريات للدوري</button>`;
+  const byes=Object.keys(L.byes||{});
+  if(byes.length) out+=`<div class="note"><b>الاستراحات (العدد فردي):</b> في كل جولة يرتاح مشارك واحد، ولا تُحتسب الاستراحة خسارة.<div class="mmeta" style="margin-top:6px">${byes.map(r=>`<span class="chip">الجولة ${r}: ${esc(pname(L,L.byes[r]))}</span>`).join('')}</div></div>`;
+  if(L.format==='ko'){const byeIds=L.ko.slots.map((s,i,a)=>s&&a[i%2?i-1:i+1]===null?s:null).filter(Boolean); if(byeIds.length) out+=`<div class="note"><b>تأهل مباشر للدور الثاني:</b> ${byeIds.map(id=>esc(pname(L,id))).join('، ')}</div>`;}
+  out+=`<div class="mlist">${L.matches.map((m,i)=>mrow(L,m,i,cm,nm)).join('')}</div>`;
+  if(L.format==='ko'&&L.status!=='done') out+=`<p class="hint">مباريات الأدوار التالية تظهر تلقائياً عند معرفة المتأهلين.</p>`;
+  out+=`<p class="hint">اضغط على أي مباراة لعرض تفاصيلها أو تصحيح نتيجتها. استخدم الأسهم لتغيير ترتيب المباريات التي لم تبدأ.</p>`;
+  return out;
+}
+function statusChip(m,isCur){
+  if(m.status==='done') return '<span class="chip ok">انتهت</span>';
+  if(m.status==='live') return '<span class="chip live">جارية الآن</span>';
+  if(m.status==='paused') return '<span class="chip warn">متوقفة</span>';
+  if(m.status==='scoring') return '<span class="chip warn">بانتظار النتيجة</span>';
+  if(m.status==='cancelled') return '<span class="chip">ملغاة</span>';
+  return isCur?'<span class="chip live">الحالية</span>':'<span class="chip">لم تبدأ</span>';
+}
+function mrow(L,m,i,cm,nm){
+  const cls=m===cm?'is-current':m===nm?'is-next':m.status==='cancelled'?'is-cancelled':'';
+  const showSc=m.status==='done'||ACTIVE.indexOf(m.status)>=0;
+  const pens=m.status==='done'&&L.format==='ko'&&m.sa===m.sb?`<span class="chip">ترجيح: ${esc(pname(L,m.pk))}</span>`:'';
+  const gaps=m.status==='done'&&m.events.length<m.sa+m.sb?'<span class="chip">إحصائيات ناقصة</span>':'';
+  const canMove=m.status==='pending';
+  return `<div class="mrow ${cls}"><button class="mmain" data-act="openMatch" data-id="${m.id}"><span class="mno num">${i+1}</span><span class="mbody">
+   <span class="mt"><b>${esc(pname(L,m.a))}</b><span class="${showSc?'msc':'vs'}">${showSc?sc2(m.sa,m.sb):'ضد'}</span><b>${esc(pname(L,m.b))}</b></span>
+   <span class="mmeta">${statusChip(m,m===cm)}${m===nm?'<span class="chip">القادمة</span>':''}<span>${roundLabel(L,m)}</span>${pens}${gaps}</span></span></button>
+   ${canMove?`<span class="arrows"><button class="icon-btn" data-act="mv" data-id="${m.id}" data-d="-1" aria-label="تقديم">${ic('up')}</button><button class="icon-btn" data-act="mv" data-id="${m.id}" data-d="1" aria-label="تأخير">${ic('down')}</button></span>`:'<span></span>'}</div>`;
+}
+
+/* ---- standings ---- */
+function vStandings(L){
+  if(L.format==='ko') return vBracket(L);
+  const tb=E.table(L),complete=L.status==='done'&&!L.endedManually;
+  const P=L.points;
+  return `<div class="sec-head"><h2>جدول الترتيب</h2><span class="chip">${complete?'نهائي':'يتحدث بعد كل نتيجة'}</span></div>
+  <div class="tbl-wrap"><table><thead><tr><th>المركز</th><th style="text-align:right">المشارك</th><th>لعب</th><th>فاز</th><th>تعادل</th><th>خسر</th><th>له</th><th>عليه</th><th>الفارق</th><th>النقاط</th></tr></thead><tbody>
+  ${tb.map(r=>`<tr class="${complete&&r.rank===1?'first':''}"><td class="rank">${r.rank}${r.tied?'=':''}</td><td class="name">${esc(r.name)}${complete&&r.rank===1?' <span class="chip gold">البطل</span>':''}</td><td>${r.P}</td><td>${r.W}</td><td>${r.D}</td><td>${r.L}</td><td>${r.GF}</td><td>${r.GA}</td><td class="ltr">${r.GD>0?'+':''}${r.GD}</td><td class="pts">${r.Pts}</td></tr>`).join('')}
+  </tbody></table></div>
+  <div class="note"><b>كيف يُرتَّب الجدول؟</b> حسب ${L.tiebreak.map(c=>TB_LABEL[c]).join('، ثم ')}. إذا تساوى مشاركان في كل المعايير يظهر المركز نفسه مع علامة «=».<br>النقاط: فوز ${P.win}، تعادل ${P.draw}، خسارة ${P.loss}. تعديل هذه القواعد من «الإدارة».</div>
+  ${!complete&&totals(L).left>0?`<p class="hint">لا يُعلن البطل قبل اكتمال كل المباريات (${totals(L).left} متبقية).</p>`:''}
+  <button class="btn" data-act="exportCsv">${ic('download')} تصدير النتائج والترتيب CSV</button>`;
+}
+function vBracket(L){
+  const rounds=E.koRounds(L),R=rounds.length-1;
+  let cols='';
+  for(let r=0;r<R;r++){
+    let boxes='';
+    for(let k=0;k<rounds[r].length/2;k++){
+      const a=rounds[r][2*k],b=rounds[r][2*k+1];
+      if(a===null&&b===null) continue;
+      const m=L.matches.find(x=>x.ko&&x.ko.r===r&&x.ko.k===k);
+      const w=m&&m.status==='done'?E.winner(m):(a===null?b:b===null?a:undefined);
+      const line=(id,sc)=>`<div class="${id===undefined?'tbd':''} ${w&&id===w?'w':''}"><span>${esc(pname(L,id))}</span><span class="num">${sc==null?'':sc}</span></div>`;
+      boxes+=`<div class="bm">${line(a,m&&m.status==='done'?m.sa:null)}${line(b,m&&m.status==='done'?m.sb:null)}</div>`;
+    }
+    cols+=`<div class="bcol"><h4>${roundName(r,R)}</h4>${boxes}</div>`;
+  }
+  const champ=rounds[R][0];
+  cols+=`<div class="bcol"><h4>البطل</h4><div class="bm"><div class="${typeof champ==='string'?'w':'tbd'}"><span>${typeof champ==='string'?esc(pname(L,champ)):'يُحدَّد بعد النهائي'}</span>${typeof champ==='string'?ic('trophy'):''}</div></div></div>`;
+  return `<div class="sec-head"><h2>شجرة خروج المغلوب</h2></div><div class="bracket">${cols}</div>
+  <div class="note">الفائز يتأهل للدور التالي. عند التعادل يُختار المتأهل بركلات الترجيح عند تسجيل النتيجة.</div>
+  <button class="btn" data-act="exportCsv">${ic('download')} تصدير النتائج CSV</button>`;
+}
+
+/* ---- player stats ---- */
+function vStats(L){
+  const S=E.playerStats(L),done=L.matches.filter(m=>m.status==='done').length;
+  let out=`<div class="sec-head"><h2>إحصائيات اللاعبين</h2></div>`;
+  if(!done) return out+`<div class="card"><h3>لا توجد مباريات منتهية بعد</h3><p class="muted">بعد تأكيد أول نتيجة تظهر هنا قوائم الهدافين وصانعي الأهداف. تسجيل أسماء الهدافين اختياري من شاشة المباراة.</p></div>`;
+  const pct=S.total?Math.round(100*S.attr/S.total):100;
+  out+=`<div class="note ${S.attr<S.total?'warn':'ok'}"><b>${S.attr} من ${S.total}</b> هدفاً منسوبة لأصحابها (${pct}%). ${S.attr<S.total?'الأرقام تشمل المسجَّل فقط. المشارك الذي لديه أهداف غير منسوبة يظهر بجانبه «بيانات ناقصة»، فلا تُعد أصفاره نهائية.':'كل الأهداف مسجّلة بأسماء أصحابها.'}</div>`;
+  const tag=r=>S.incomplete.has(r.pid)?' <span class="chip warn">بيانات ناقصة</span>':'';
+  const sub=r=>L.type==='teams'?esc(r.team):(r.team!==r.name?esc(r.team):'');
+  const list=(title,arr,val)=>`<div class="card"><h3>${title}</h3>${arr.length?`<div class="lb">${arr.map((r,i,a)=>{const rk=a.findIndex(x=>val(x)===val(r))+1;return `<div class="lb-row"><span class="rank">${rk}</span><span class="who"><span>${esc(r.name)}${tag(r)}</span><small>${sub(r)}</small></span><b>${val(r)}</b></div>`;}).join('')}</div>`:'<p class="muted">لم يُسجَّل شيء بعد.</p>'}</div>`;
+  const P=S.players;
+  const scorers=P.filter(r=>r.G>0).sort((a,b)=>b.G-a.G||b.A-a.A);
+  const assisters=P.filter(r=>r.A>0).sort((a,b)=>b.A-a.A||b.G-a.G);
+  const contrib=P.filter(r=>r.G+r.A>0).sort((a,b)=>(b.G+b.A)-(a.G+a.A)||b.G-a.G);
+  out+=`<div class="grid2">${list('ترتيب الهدافين',scorers,r=>r.G)}${list('ترتيب صانعي الأهداف',assisters,r=>r.A)}</div>${list('المساهمات التهديفية (أهداف + تمريرات)',contrib,r=>r.G+r.A)}`;
+  const sel=ui.statsPlayer, pick=P.find(r=>r.key===sel);
+  out+=`<div class="card"><h3>لاعب محدد</h3><select id="statsPlayer" data-in="statsPlayer" data-re="1" aria-label="اختر لاعباً"><option value="">اختر لاعباً…</option>${L.participants.map(p=>`<optgroup label="${esc(p.name)}">${P.filter(r=>r.pid===p.id).map(r=>`<option value="${r.key}" ${r.key===sel?'selected':''}>${esc(r.name)}</option>`).join('')}</optgroup>`).join('')}</select>`;
+  if(pick){
+    out+=`<div class="kpis"><div class="kpi"><b>${pick.G}</b><span>أهداف</span></div><div class="kpi"><b>${pick.A}</b><span>تمريرات حاسمة</span></div><div class="kpi"><b>${pick.G+pick.A}</b><span>مساهمات</span></div><div class="kpi"><b>${pick.matches.length}</b><span>مباريات ${L.type==='teams'?'فريقه':'له'}</span></div></div>`;
+    out+=pick.matches.length?`<div class="tbl-wrap"><table><thead><tr><th style="text-align:right">المنافس</th><th>النتيجة</th><th>أهداف</th><th>تمريرات</th></tr></thead><tbody>${pick.matches.map(x=>{const unk=!x.complete;return `<tr><td class="name">${esc(pname(L,x.opp))}</td><td class="ltr">${sc2(x.gf,x.ga)}</td><td>${x.g||(unk?'<span class="muted">غير مسجَّل</span>':'0')}</td><td>${x.a||(unk?'<span class="muted">غير مسجَّل</span>':'0')}</td></tr>`;}).join('')}</tbody></table></div><p class="hint">«غير مسجَّل» تعني أن أهداف الفريق في تلك المباراة لم تُنسب كلها لأصحابها، فلا نعرف إن كان رصيده صفراً فعلاً.</p>`:'<p class="muted">لا مباريات منتهية بعد.</p>';
+  }
+  out+='</div>';
+  return out;
+}
+
+/* ---- manage ---- */
+function vManage(L){
+  const st=started(L),P=L.points;
+  const players=p=>`<div class="stack" style="padding-inline-start:12px">${p.players.map(x=>(L.type==='individual'&&x.id==='self')?'':`<div class="prow"><span class="pno">${ic('users')}</span><input type="text" id="pl-${p.id}-${x.id}" data-in="plname" data-pid="${p.id}" data-plid="${x.id}" value="${esc(x.name)}" maxlength="30" aria-label="اسم اللاعب"><button class="icon-btn" data-act="delPlayer" data-pid="${p.id}" data-plid="${x.id}" aria-label="حذف اللاعب">${ic('trash')}</button></div>`).join('')}
+    <div class="row"><input type="text" id="mp-${p.id}" placeholder="${L.type==='teams'?'إضافة لاعب للفريق':'إضافة لاعب مساعد'}" maxlength="30" style="flex:1 1 150px"><button class="btn btn-sm" data-act="mAddPlayer" data-pid="${p.id}">${ic('plus')} إضافة</button></div></div>`;
+  return `<div class="sec-head"><h2>الإدارة والإعدادات</h2></div>
+  ${pausedBanner(L)}
+  <div class="card"><h3>التحكم بالدوري</h3><div class="ctrl-row">
+   ${L.status==='done'?`<button class="btn btn-primary" data-act="reopenLeague" ${totals(L).left>0?'':'disabled'}>${ic('play')} متابعة الدوري</button>`:L.status==='paused'?`<button class="btn btn-primary" data-act="resumeLeague">${ic('play')} استئناف الدوري</button>`:`<button class="btn" data-act="pauseLeague">${ic('pause')} إيقاف الدوري مؤقتاً</button>`}
+   ${L.status!=='done'?`<button class="btn btn-danger" data-act="endLeague">${ic('flag')} إنهاء الدوري</button>`:''}
+   ${L.format!=='ko'?`<button class="btn" data-act="addMatches">${ic('plus')} إضافة مباريات</button>`:''}
+   <button class="btn" data-act="exportCsv">${ic('download')} تصدير CSV</button>
+   <button class="btn" data-act="newLeague">${ic('plus')} دوري جديد</button></div>
+   <p class="hint">إنشاء دوري جديد لا يحذف هذا الدوري، ويمكن فتحه لاحقاً من «كل الدوريات».</p></div>
+
+  <div class="card"><h3>المدة والنقاط</h3>
+   <div class="field"><label for="s-name">اسم الدوري</label><input type="text" id="s-name" data-in="set.name" value="${esc(L.name)}" maxlength="40"></div>
+   <div class="grid2">
+    <div class="field"><label for="s-mm">مدة المباراة (دقائق)</label><input type="number" id="s-mm" data-in="set.matchMin" data-re="1" min="0.5" max="120" step="0.5" value="${L.matchMin}"><span class="hint">تُطبَّق على المباريات التي لم تبدأ. المباراة الجارية تُعدَّل بأزرار ± في شاشتها.</span></div>
+    <div class="field"><label for="s-bm">الاستراحة بين المباريات (دقائق)</label><input type="number" id="s-bm" data-in="set.breakMin" data-re="1" min="0" max="60" step="0.5" value="${L.breakMin}"><span class="hint">تُطبَّق على الاستراحات القادمة. صفر يعني بلا استراحة.</span></div>
+   </div>
+   <div><span class="lbl">نقاط المباراة</span><div class="pts3" style="margin-top:6px">
+    <div class="field"><label for="s-w" class="hint">الفوز</label><input type="number" id="s-w" data-in="set.win" data-re="1" min="0" max="10" value="${P.win}"></div>
+    <div class="field"><label for="s-d" class="hint">التعادل</label><input type="number" id="s-d" data-in="set.draw" data-re="1" min="0" max="10" value="${P.draw}"></div>
+    <div class="field"><label for="s-l" class="hint">الخسارة</label><input type="number" id="s-l" data-in="set.loss" data-re="1" min="-5" max="10" value="${P.loss}"></div></div>
+    <p class="hint" style="margin-top:6px">تغيير النقاط يعيد احتساب الترتيب لكل المباريات السابقة فوراً.</p></div>
+   <label class="chk"><input type="checkbox" id="s-adj" data-in="set.adjust" data-re="1" ${L.adjust?'checked':''}><span>السماح بإضافة الوقت أو إنقاصه أثناء المباراة</span></label>
+   <label class="chk"><input type="checkbox" id="s-sa" data-in="set.selfAssist" data-re="1" ${L.selfAssist?'checked':''}><span>السماح بأن يكون صانع الهدف هو صاحبه</span></label>
+  </div>
+
+  ${L.format!=='ko'?`<div class="card"><h3>كسر التعادل في الترتيب</h3><p class="hint">يُطبَّق بالترتيب من الأعلى. النقاط دائماً أولاً.</p><div class="stack">${L.tiebreak.map((c,i)=>`<div class="row" style="justify-content:space-between;background:var(--surface-2);border-radius:12px;padding:6px 12px"><span><b class="num">${i+1}.</b> ${TB_LABEL[c]}</span>${c==='pts'?'<span class="hint">ثابت</span>':`<span class="row" style="gap:4px"><button class="icon-btn" data-act="tb" data-i="${i}" data-d="-1" aria-label="رفع" ${i<=1?'disabled':''}>${ic('up')}</button><button class="icon-btn" data-act="tb" data-i="${i}" data-d="1" aria-label="خفض" ${i>=L.tiebreak.length-1?'disabled':''}>${ic('down')}</button></span>`}</div>`).join('')}</div></div>`:''}
+
+  <div class="card"><h3>${L.type==='teams'?'الفرق واللاعبون':'المشاركون'}</h3>
+   ${L.participants.map(p=>`<div class="stack"><div class="prow"><span class="pno">${ic(L.type==='teams'?'users':'ball')}</span><input type="text" id="pn-${p.id}" data-in="pname" data-pid="${p.id}" value="${esc(p.name)}" maxlength="30" aria-label="اسم المشارك"><button class="icon-btn" data-act="mDelPart" data-pid="${p.id}" aria-label="حذف المشارك" ${st?'disabled':''}>${ic('trash')}</button></div>${players(p)}</div>`).join('')}
+   ${st?'<p class="hint">بدأ الدوري، لذلك لا يمكن إضافة مشاركين أو حذفهم. تعديل الأسماء متاح دائماً.</p>':`<div class="row"><input type="text" id="mp-new" placeholder="مشارك جديد" maxlength="30" style="flex:1 1 150px"><button class="btn" data-act="mAddPart">${ic('plus')} إضافة مشارك</button></div><p class="hint">إضافة مشارك أو حذفه قبل أول مباراة يعيد إنشاء جدول المباريات.</p>`}
+  </div>
+
+  <div class="card"><h3>المظهر والتنبيهات</h3>
+   <div><span class="lbl">المظهر</span><div class="seg" style="margin-top:6px">${[['system','حسب الجهاز'],['light','فاتح'],['dark','داكن']].map(([k,t])=>`<button data-act="theme" data-k="${k}" aria-pressed="${DB.prefs.theme===k}">${t}</button>`).join('')}</div></div>
+   <div><span class="lbl">لون الملعب</span><div class="seg" style="margin-top:6px">${[['green','أخضر'],['black','أسود'],['blue','أزرق'],['orange','برتقالي']].map(([k,t])=>`<button data-act="accent" data-k="${k}" aria-pressed="${(DB.prefs.accent||'green')===k}">${t}</button>`).join('')}</div></div>
+   <label class="chk"><input type="checkbox" id="p-snd" data-in="pref.sound" ${DB.prefs.sound?'checked':''}><span>صافرة وتنبيه صوتي عند انتهاء الوقت والاستراحة</span></label>
+   <label class="chk"><input type="checkbox" id="p-vib" data-in="pref.vibrate" ${DB.prefs.vibrate?'checked':''}><span>اهتزاز الجهاز مع التنبيه (إن كان مدعوماً)</span></label>
+   <button class="btn" data-act="testSound">${ic('sound')} تجربة الصافرة</button>
+   <p class="hint">على الهاتف: اترك الصوت مرتفعاً وأوقف الوضع الصامت. التطبيق يحاول إبقاء الشاشة مضاءة أثناء المباراة.</p>
+  </div>
+
+  <div class="card"><h3>${ic('lock')} رمز المسؤول</h3>
+   <p class="hint">${L.pin?'الرمز مفعّل: تصحيح النتائج السابقة وإعادة المباريات وإلغاؤها وإنهاء الدوري تحتاج الرمز.':'اختياري. إذا وضعت رمزاً، سيُطلب عند تصحيح نتيجة سابقة أو إعادة مباراة أو إلغائها أو إنهاء الدوري.'}</p>
+   <div class="row"><input type="password" inputmode="numeric" id="s-pin" placeholder="${L.pin?'رمز جديد':'4 أرقام أو أكثر'}" maxlength="12" style="flex:1 1 150px"><button class="btn" data-act="savePin">${L.pin?'تغيير الرمز':'حفظ الرمز'}</button>${L.pin?`<button class="btn btn-danger" data-act="clearPin">إزالة</button>`:''}</div>
+  </div>
+  <div class="card"><h3>${ic('copy')} النسخ الاحتياطي والاستيراد</h3><p class="hint">انقل الدوري بنتائجه وهدافيه إلى جهاز آخر، أو احتفظ بنسخة احتياطية.</p><div class="ctrl-row"><button class="btn" data-act="backup">${ic('download')} تصدير نسخة احتياطية</button><button class="btn" data-act="importOpen">${ic('upload')} استيراد بيانات</button></div></div>
+  <div class="card"><h3>${ic('download')} التطبيق على جهازك</h3><p class="hint">${IS_STANDALONE()?'أنت تستخدم النسخة المثبّتة. تعمل بدون إنترنت.':'ثبّته على الهاتف أو التابلت أو الكمبيوتر ليفتح كتطبيق ويعمل بدون إنترنت.'}</p>${IS_STANDALONE()?'':`<button class="btn btn-primary" data-act="install">${ic('download')} تثبيت التطبيق</button>`}</div>
+  <div class="note">البيانات محفوظة تلقائياً على هذا الجهاز وهذا المتصفح فقط. لا توجد مزامنة بين الأجهزة، فاستخدم جهازاً واحداً لإدارة الدوري.</div>`;
+}
+
+/* ---- history ---- */
+function vHistory(){
+  const ls=DB.leagues;
+  return `<div class="sec-head"><h2>كل الدوريات</h2><button class="btn btn-primary" data-act="newLeague">${ic('plus')} دوري جديد</button></div>
+  <div class="ctrl-row"><button class="btn" data-act="importOpen">${ic('upload')} استيراد بيانات</button>${ls.length?`<button class="btn" data-act="backup">${ic('download')} نسخة احتياطية لكل الدوريات</button>`:''}</div>
+  ${DB.draft?`<div class="banner"><div><b>إعداد دوري غير مكتمل</b><p class="small muted">${esc(DB.draft.name||'بدون اسم')}</p></div><button class="btn" data-act="go" data-v="setup">متابعة الإعداد</button></div>`:''}
+  ${ls.length?`<div class="mlist">${ls.map(L=>{const t=totals(L);return `<div class="mrow ${L.id===DB.currentId?'is-current':''}"><button class="mmain" data-act="openLeague" data-id="${L.id}"><span class="mno">${ic(L.status==='done'?'trophy':'ball')}</span><span class="mbody"><b>${esc(L.name)}</b><span class="mmeta"><span class="chip ${L.status==='done'?'ok':''}">${STATE_LABEL[leagueState(L)]}</span><span>${FORMAT_LABEL[L.format]}</span><span class="num">${t.done}/${t.total} مباراة</span><span>${new Date(L.createdAt).toLocaleDateString('ar-EG-u-nu-latn')}</span>${L.status==='done'?`<span>${esc(headline(L))}</span>`:''}</span></span></button><span class="arrows"><button class="icon-btn" data-act="delLeague" data-id="${L.id}" aria-label="حذف الدوري">${ic('trash')}</button></span></div>`;}).join('')}</div>`:'<div class="card"><p class="muted">لا توجد دوريات بعد.</p></div>'}`;
+}
+
+/* ---- setup ---- */
+function defDraft(){return {name:'',type:'individual',format:'single',names:['','','',''],matchMin:5,breakMin:1,win:3,draw:1,loss:0,adjust:true,selfAssist:false,starter:'',shuffle:false,err:''};}
+function vSetup(){
+  const d=DB.draft||(DB.draft=defDraft());
+  const n=d.names.filter(x=>x.trim()).length, total=d.names.length;
+  const cnt=matchCount(total,d.format);
+  const est=cnt*Number(d.matchMin||0)+Math.max(0,cnt-1)*Number(d.breakMin||0);
+  let koNote='';
+  if(d.format==='ko'){let size=1;while(size<total)size*=2;const byes=size-total;koNote=total<2?'':byes===0?`<p class="hint">العدد ${total} مناسب تماماً لخروج المغلوب.</p>`:`<p class="note warn small">العدد ${total} ليس من مضاعفات 2 (مثل 4 أو 8 أو 16)، لذلك سيتأهل ${byes} ${byes===1?'مشارك':'مشاركين'} مباشرة إلى الدور الثاني. إن أردت أن يلعب الجميع العدد نفسه من المباريات فاختر «دور واحد».</p>`;}
+  const chips=(key,vals,unit)=>vals.map(v=>`<button data-act="dSet" data-k="${key}" data-val="${v}" aria-pressed="${Number(d[key])===v}">${v===0?'بلا استراحة':v+' '+unit}</button>`).join('');
+  const lbl=d.type==='teams'?'الفريق':'اللاعب';
+  return `<div class="sec-head"><h2>دوري جديد</h2>${DB.leagues.length?`<button class="btn btn-sm" data-act="cancelSetup">إلغاء</button>`:''}</div>
+  <div class="card"><div class="field"><label for="d-name">اسم الدوري</label><input type="text" id="d-name" data-in="d.name" value="${esc(d.name)}" placeholder="مثال: تحدي الطلاب" maxlength="40" autocomplete="off"></div>
+   <div><span class="lbl">المشاركون</span><div class="seg" style="margin-top:6px"><button data-act="dSet" data-k="type" data-val="individual" aria-pressed="${d.type==='individual'}">أفراد</button><button data-act="dSet" data-k="type" data-val="teams" aria-pressed="${d.type==='teams'}">فرق</button></div></div></div>
+
+  <div class="card"><div class="sec-head"><h3>أسماء ${d.type==='teams'?'الفرق':'اللاعبين'}</h3><div class="custom"><label for="d-count" class="hint">العدد</label><input type="number" id="d-count" data-in="dcount" data-re="1" min="2" max="64" value="${total}"></div></div>
+   <div class="plist">${d.names.map((nm,i)=>`<div class="prow"><span class="pno num">${i+1}</span><input type="text" id="dn-${i}" data-in="dname" data-i="${i}" value="${esc(nm)}" placeholder="اسم ${lbl} ${i+1}" maxlength="30" autocomplete="off" enterkeyhint="next"><button class="icon-btn" data-act="dDel" data-i="${i}" aria-label="حذف" ${total<=2?'disabled':''}>${ic('trash')}</button></div>`).join('')}</div>
+   <div class="row"><button class="btn" data-act="dAdd">${ic('plus')} إضافة ${d.type==='teams'?'فريق':'مشارك'}</button><button class="btn" data-act="namesOpen">${ic('users')} لصق قائمة أسماء</button><label class="chk" style="padding:0"><input type="checkbox" id="d-shuf" data-in="d.shuffle" ${d.shuffle?'checked':''}><span>خلط الترتيب عشوائياً</span></label></div>
+   ${d.type==='teams'?'<p class="hint">يمكنك إضافة أسماء لاعبي كل فريق لاحقاً من «الإدارة» أو أثناء تسجيل الإحصائيات.</p>':''}
+  </div>
+
+  <div class="card"><div><span class="lbl">نظام الدوري</span><div class="seg" style="margin-top:6px">${['single','double','ko'].map(k=>`<button data-act="dSet" data-k="format" data-val="${k}" aria-pressed="${d.format===k}">${FORMAT_LABEL[k]}</button>`).join('')}</div>
+   <p class="hint" style="margin-top:6px">${d.format==='single'?'يواجه كل مشارك جميع الآخرين مرة واحدة.':d.format==='double'?'يواجه كل مشارك جميع الآخرين مرتين (ذهاب وإياب).':'الخاسر يخرج والفائز يتأهل حتى النهائي.'}</p>${koNote}</div>
+   <div class="field"><label for="d-start">من يلعب في المباراة الأولى؟</label><select id="d-start" data-in="d.starter"><option value="">تلقائي</option>${d.names.map((nm,i)=>nm.trim()?`<option value="${i}" ${String(d.starter)===String(i)?'selected':''}>${esc(nm)}</option>`:'').join('')}</select><span class="hint">يمكنك تغيير ترتيب المباريات يدوياً بعد الإنشاء.</span></div>
+  </div>
+
+  <div class="card"><div><span class="lbl">مدة المباراة</span><div class="seg" style="margin-top:6px">${chips('matchMin',[5,7,10,15],'د')}</div><div class="custom" style="margin-top:8px"><label for="d-mm" class="hint">مدة مخصصة بالدقائق</label><input type="number" id="d-mm" data-in="d.matchMin" data-re="1" min="0.5" max="120" step="0.5" value="${d.matchMin}"></div></div>
+   <div><span class="lbl">الاستراحة بين المباريات</span><div class="seg" style="margin-top:6px">${chips('breakMin',[0,1,2,3],'د')}</div><div class="custom" style="margin-top:8px"><label for="d-bm" class="hint">مدة مخصصة بالدقائق</label><input type="number" id="d-bm" data-in="d.breakMin" data-re="1" min="0" max="60" step="0.5" value="${d.breakMin}"></div></div>
+   <div><span class="lbl">النقاط</span><div class="pts3" style="margin-top:6px"><div class="field"><label for="d-w" class="hint">الفوز</label><input type="number" id="d-w" data-in="d.win" min="0" max="10" value="${d.win}"></div><div class="field"><label for="d-d" class="hint">التعادل</label><input type="number" id="d-d" data-in="d.draw" min="0" max="10" value="${d.draw}"></div><div class="field"><label for="d-l" class="hint">الخسارة</label><input type="number" id="d-l" data-in="d.loss" min="-5" max="10" value="${d.loss}"></div></div></div>
+   <label class="chk"><input type="checkbox" id="d-adj" data-in="d.adjust" ${d.adjust?'checked':''}><span>السماح بإضافة الوقت أو إنقاصه أثناء المباراة</span></label>
+   <label class="chk"><input type="checkbox" id="d-sa" data-in="d.selfAssist" ${d.selfAssist?'checked':''}><span>السماح بأن يكون صانع الهدف هو صاحبه</span></label>
+  </div>
+
+  <div class="preview"><span><b class="num">${cnt}</b> مباراة</span><span>نحو <b class="num">${Math.round(est)}</b> دقيقة على ملعب واحد</span>${d.format!=='ko'&&total%2?'<span class="muted">العدد فردي: يرتاح مشارك في كل جولة</span>':''}</div>
+  ${d.err?`<div class="errs"><div><b>!</b> ${esc(d.err)}</div></div>`:''}
+  <button class="btn btn-primary btn-xl" data-act="create">${ic('check')} إنشاء الدوري</button>`;
+}
+
+/* ---- champion ---- */
+function vChampion(L){
+  let champs=[],podium=[],rest=[];
+  if(L.format==='ko'){
+    const r=E.koRanking(L);
+    champs=r.filter(x=>x.rank===1).map(x=>pname(L,x.id));
+    podium=r.filter(x=>x.rank>1).slice(0,3).map(x=>({t:x.label,n:pname(L,x.id)}));
+    rest=r.map(x=>({rank:x.rank,name:pname(L,x.id),info:x.label}));
+  } else {
+    const tb=E.table(L);
+    champs=tb.filter(x=>x.rank===1).map(x=>x.name);
+    podium=tb.filter(x=>x.rank>1).slice(0,2).map(x=>({t:x.rank===2?'الوصيف':'المركز '+x.rank,n:x.name+' · '+x.Pts+' نقطة'}));
+    rest=tb.map(x=>({rank:x.rank+(x.tied?'=':''),name:x.name,info:x.Pts+' نقطة · فارق '+(x.GD>0?'+':'')+x.GD}));
+  }
+  const manual=L.endedManually;
+  const title=manual?'المتصدر عند إنهاء الدوري':champs.length>1?'تعادل كامل على اللقب':'بطل '+L.name;
+  return `<section class="champ">${PITCH_LINES}${TROPHY}<span class="eyebrow">${esc(title)}</span><h1>${champs.map(esc).join('<br>')||'—'}</h1>
+   ${manual?'<p>أُنهي الدوري يدوياً قبل اكتمال كل المباريات، لذلك هذا ترتيب لحظة الإنهاء.</p>':champs.length>1?'<p>تساوى المتصدرون في كل معايير الترتيب. يمكنكم لعب مباراة فاصلة ودية.</p>':''}
+   ${podium.length?`<div class="podium">${podium.map(p=>`<div><small>${esc(p.t)}</small><b>${esc(p.n)}</b></div>`).join('')}</div>`:''}
+   ${(()=>{const S=E.playerStats(L).players;const g=S.filter(r=>r.G>0).sort((a,b)=>b.G-a.G||b.A-a.A),a=S.filter(r=>r.A>0).sort((x,y)=>y.A-x.A||y.G-x.G);const items=[];
+     if(g.length){const best=g.filter(r=>r.G===g[0].G);items.push(`<div><small>هداف الدوري</small><b>${best.map(r=>esc(r.name)).join('، ')} · ${g[0].G} ${g[0].G===1?'هدف':'أهداف'}</b></div>`);}
+     if(a.length){const best=a.filter(r=>r.A===a[0].A);items.push(`<div><small>ملك الأسيست</small><b>${best.map(r=>esc(r.name)).join('، ')} · ${a[0].A}</b></div>`);}
+     return items.length?`<div class="podium">${items.join('')}</div>`:'';})()}</section>
+  <div class="card"><h3>الترتيب النهائي</h3><div class="lb">${rest.map(r=>`<div class="lb-row"><span class="rank">${r.rank}</span><span class="who"><span>${esc(r.name)}</span><small>${esc(r.info)}</small></span><span></span></div>`).join('')}</div></div>
+  <div class="quick"><button class="btn" data-act="go" data-v="standings">${ic('table')} الجدول</button><button class="btn" data-act="go" data-v="stats">${ic('chart')} الإحصائيات</button><button class="btn" data-act="exportCsv">${ic('download')} تصدير CSV</button>${L.format!=='ko'?`<button class="btn" data-act="addMatches">${ic('plus')} مباريات إضافية</button>`:''}<button class="btn btn-primary" data-act="newLeague">${ic('plus')} دوري جديد</button></div>`;
+}
+
+const VIEWS={home:vHome,match:vMatch,schedule:vSchedule,standings:vStandings,stats:vStats,manage:vManage,history:vHistory,setup:vSetup,champion:vChampion};
+
+function addMatchesSheet(L){
+  if(L.format==='ko') return `<div class="sheet-head"><h3>إضافة مباريات</h3><button class="icon-btn" data-act="closeSheet" aria-label="إغلاق">${ic('x')}</button></div><p>في نظام خروج المغلوب تُنشأ المباريات تلقائياً من الشجرة، فلا يمكن إضافة مباريات يدوياً. أنشئ دوري «دور واحد» إذا أردت مباريات حرة.</p>`;
+  const opts=sel=>L.participants.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)}</option>`).join('');
+  const n=L.participants.length,full=n*(n-1)/2;
+  return `<div class="sheet-head"><h3>${ic('plus')} إضافة مباريات للدوري</h3><button class="icon-btn" data-act="closeSheet" aria-label="إغلاق">${ic('x')}</button></div>
+   <div class="card"><h3>دور إضافي كامل</h3><p class="hint">يواجه كل مشارك جميع الآخرين مرة أخرى: ${full} مباراة جديدة تُضاف في آخر الجدول، مرتبة بحيث لا يلعب أحد مباراتين متتاليتين قدر الإمكان.</p>
+    <button class="btn btn-primary" data-act="addRound">${ic('plus')} إضافة دور كامل (${full} مباراة)</button></div>
+   <div class="card"><h3>مباراة واحدة</h3>
+    <div class="grid2"><div class="field"><label for="am-a">المشارك الأول</label><select id="am-a">${opts(L.participants[0].id)}</select></div>
+    <div class="field"><label for="am-b">المشارك الثاني</label><select id="am-b">${opts(L.participants[1].id)}</select></div></div>
+    <label class="chk"><input type="checkbox" id="am-next"><span>اجعلها المباراة التالية مباشرة</span></label>
+    <button class="btn btn-primary" data-act="addOne">${ic('plus')} إضافة المباراة</button></div>
+   <p class="hint">المباريات الإضافية تُحتسب في الترتيب والإحصائيات مثل غيرها. يمكن إلغاء أي مباراة لم تُلعب من الجدول.</p>`;
+}
+function backupSheet(){
+  const L=cur(),one=ui.sheet.scope==='one'&&L;
+  const data=one?{app:'dawri-almalab',v:1,exportedAt:new Date().toISOString(),leagues:[L]}:{app:'dawri-almalab',v:1,exportedAt:new Date().toISOString(),leagues:DB.leagues};
+  const txt=JSON.stringify(data);
+  return `<div class="sheet-head"><h3>${ic('download')} نسخة احتياطية</h3><button class="icon-btn" data-act="closeSheet" aria-label="إغلاق">${ic('x')}</button></div>
+   <div class="seg">${L?`<button data-act="backupScope" data-k="one" aria-pressed="${!!one}">هذا الدوري فقط</button>`:''}<button data-act="backupScope" data-k="all" aria-pressed="${!one}">كل الدوريات (${DB.leagues.length})</button></div>
+   <p class="hint">احفظ هذا الملف أو النص، ثم استورده على جهاز آخر من «استيراد بيانات» لنقل الدوري بنتائجه وهدافيه.</p>
+   <textarea id="bk-out" readonly>${esc(txt)}</textarea>
+   <div class="ctrl-row"><button class="btn btn-primary" data-act="copyBackup">${ic('copy')} نسخ</button>${IS_TOP?`<button class="btn" data-act="dlBackup">${ic('download')} تنزيل ملف</button>`:''}</div>`;
+}
+function importSheet(){
+  const s=ui.sheet;
+  return `<div class="sheet-head"><h3>${ic('download')} استيراد بيانات</h3><button class="icon-btn" data-act="closeSheet" aria-label="إغلاق">${ic('x')}</button></div>
+   <p class="hint">اختر ملف نسخة احتياطية من «دوري الملعب» (‎.json) أو الصق محتواه. الدوريات المستوردة تُضاف بجانب دورياتك الحالية ولا تحذف شيئاً.</p>
+   <div class="field"><label for="imp-file">ملف من الجهاز</label><input type="file" id="imp-file" accept=".json,application/json,.txt,text/plain"></div>
+   <div class="field"><label for="imp-text">أو الصق البيانات هنا</label><textarea id="imp-text" placeholder='{"app":"dawri-almalab", ...}'>${esc(s.text||'')}</textarea></div>
+   ${s.err?`<div class="errs"><div><b>!</b> ${esc(s.err)}</div></div>`:''}
+   <button class="btn btn-primary" data-act="doImport">${ic('check')} استيراد</button>`;
+}
+function namesSheet(){
+  const s=ui.sheet;
+  return `<div class="sheet-head"><h3>${ic('users')} استيراد أسماء المشاركين</h3><button class="icon-btn" data-act="closeSheet" aria-label="إغلاق">${ic('x')}</button></div>
+   <p class="hint">اكتب أو الصق الأسماء: كل اسم في سطر، أو افصل بينها بفاصلة. يمكنك أيضاً اختيار ملف نصي أو CSV (يُؤخذ العمود الأول).</p>
+   <div class="field"><label for="nm-file">ملف أسماء</label><input type="file" id="nm-file" accept=".txt,.csv,text/plain,text/csv"></div>
+   <textarea id="nm-text" style="direction:rtl;text-align:right;font-family:var(--font-body);font-size:16px" placeholder="أحمد&#10;محمد&#10;خالد&#10;عمر">${esc(s.text||'')}</textarea>
+   ${s.err?`<div class="errs"><div><b>!</b> ${esc(s.err)}</div></div>`:''}
+   <button class="btn btn-primary" data-act="useNames">${ic('check')} استخدام الأسماء</button>`;
+}
+
+/* ---- sheets (in-page dialogs) ---- */
+function renderSheet(){
+  const root=$('#sheet-root'),s=ui.sheet,L=cur();
+  if(!s){root.innerHTML='';return;}
+  let inner='';
+  if(s.type==='confirm') inner=`<div class="sheet-head"><h3>${esc(s.title)}</h3></div><p>${esc(s.text)}</p><div class="ctrl-row"><button class="btn ${s.danger?'btn-danger':'btn-primary'}" data-act="sheetYes">${esc(s.yes||'تأكيد')}</button><button class="btn" data-act="closeSheet">تراجع</button></div>`;
+  else if(s.type==='install') inner=installSheet();
+  else if(s.type==='addm'&&L) inner=addMatchesSheet(L);
+  else if(s.type==='backup') inner=backupSheet();
+  else if(s.type==='import') inner=importSheet();
+  else if(s.type==='names') inner=namesSheet();
+  else if(s.type==='pin') inner=`<div class="sheet-head"><h3>${ic('lock')} رمز المسؤول</h3><button class="icon-btn" data-act="closeSheet" aria-label="إغلاق">${ic('x')}</button></div><p class="muted">هذا الإجراء يحتاج رمز المسؤول.</p><input type="password" inputmode="numeric" id="pin-in" maxlength="12" autocomplete="off">${s.err?`<div class="errs"><div><b>!</b> ${esc(s.err)}</div></div>`:''}<button class="btn btn-primary" data-act="pinOk">تأكيد</button>`;
+  else if(s.type==='csv'){
+    const text=csv(L);
+    inner=`<div class="sheet-head"><h3>تصدير CSV</h3><button class="icon-btn" data-act="closeSheet" aria-label="إغلاق">${ic('x')}</button></div><p class="muted">انسخ النص والصقه في Excel أو Google Sheets.</p><textarea id="csv-out" readonly>${esc(text)}</textarea><div class="ctrl-row"><button class="btn btn-primary" data-act="copyCsv">${ic('copy')} نسخ</button>${IS_TOP?`<button class="btn" data-act="dlCsv">${ic('download')} تنزيل ملف</button><button class="btn" data-act="printPage">${ic('print')} طباعة</button>`:''}</div>`;
+  }
+  else if(s.type==='match'&&L){
+    const m=byId(L,s.id); if(!m){ui.sheet=null;root.innerHTML='';return;}
+    const i=L.matches.indexOf(m);
+    inner=`<div class="sheet-head"><div><span class="eyebrow">${roundLabel(L,m)}</span><h3>${matchLabel(i)}</h3></div><button class="icon-btn" data-act="closeSheet" aria-label="إغلاق">${ic('x')}</button></div>`;
+    if(m.status==='done'&&ui.edit&&ui.edit.id===m.id){
+      const e=ui.edit,errs=E.validate(L,previewAttr(L,e));
+      const changed=e.sa!==m.sa||e.sb!==m.sb||e.pk!==m.pk||JSON.stringify(e.events)!==JSON.stringify(m.events);
+      const conflict=['a','b'].some(sd=>e.events.filter(x=>x.side===sd&&!x.auto).length>e['s'+sd]);
+      inner+=`${board(L,e,'edit')}${koPk(L,e,'edit')}${conflict?'<div class="note warn">النتيجة الجديدة أقل من عدد الأهداف المسجلة للاعبين. عدّل إحصائيات اللاعبين أدناه.</div>':''}
+       ${errs.length?`<div class="errs">${errs.map(x=>`<div><b>!</b> ${esc(x)}</div>`).join('')}</div>`:''}
+       <button class="btn btn-primary" data-act="saveEdit" ${errs.length||!changed?'disabled':''}>${ic('check')} حفظ التصحيح وإعادة الحساب</button>
+       ${goalLog(L,e,'edit')}
+       <div class="ctrl-row"><button class="btn" data-act="replay" data-id="${m.id}">${ic('replay')} إعادة المباراة</button>${L.format!=='ko'?`<button class="btn btn-danger" data-act="cancelMatch" data-id="${m.id}">${ic('x')} إلغاء المباراة</button>`:''}</div>`;
+    } else if(m.status==='pending'){
+      inner+=`<div class="vs-line" style="color:var(--ink)"><b>${esc(pname(L,m.a))}</b><span>ضد</span><b>${esc(pname(L,m.b))}</b></div>
+       <div class="ctrl-row"><button class="btn btn-primary" data-act="playNow" data-id="${m.id}" ${active(L)?'disabled':''}>${ic('play')} اجعلها المباراة التالية</button>${L.format!=='ko'?`<button class="btn btn-danger" data-act="cancelMatch" data-id="${m.id}">${ic('x')} إلغاء المباراة</button>`:''}</div>
+       ${active(L)?'<p class="hint">توجد مباراة جارية الآن؛ يمكن نقل هذه بعد انتهائها، أو استخدم الأسهم في الجدول.</p>':''}`;
+    } else if(m.status==='cancelled'){
+      inner+=`<div class="vs-line" style="color:var(--ink)"><b>${esc(pname(L,m.a))}</b><span>ضد</span><b>${esc(pname(L,m.b))}</b></div><p class="muted">هذه المباراة ملغاة ولا تُحتسب في الترتيب.</p><button class="btn btn-primary" data-act="restoreMatch" data-id="${m.id}">${ic('replay')} استعادة المباراة</button>`;
+    } else {
+      inner+=`<div class="vs-line" style="color:var(--ink)"><b>${esc(pname(L,m.a))}</b><span class="sc">${sc2(m.sa,m.sb)}</span><b>${esc(pname(L,m.b))}</b></div><button class="btn btn-primary" data-act="go" data-v="match">${ic('timer')} الذهاب لشاشة المباراة</button>${L.format!=='ko'?`<button class="btn btn-danger" data-act="cancelMatch" data-id="${m.id}">${ic('x')} إلغاء المباراة</button>`:''}`;
+    }
+  }
+  root.innerHTML=`<div class="sheet-ov" data-act="ovClose"><div class="sheet" role="dialog" aria-modal="true">${inner}</div></div>`;
+  const pin=$('#pin-in'); if(pin) setTimeout(()=>{try{pin.focus();}catch(e){}},30);
+}
+function renderFlash(){
+  const root=$('#flash-root');
+  if(!ui.flash){root.innerHTML='';return;}
+  const L=cur(),m=L&&curMatch(L);
+  if(ui.flash==='end') root.innerHTML=`<div class="flash" role="alertdialog" aria-label="انتهى الوقت"><div class="flash-in">${ic('flag')}<h2>انتهى الوقت</h2><p>${m?esc(pname(L,m.a))+' <span class="ltr">'+sc2(m.sa,m.sb)+'</span> '+esc(pname(L,m.b)):''}</p><button class="btn btn-xl" data-act="flashGo">سجّل النتيجة</button></div></div>`;
+  else root.innerHTML=`<div class="flash ready" role="alertdialog" aria-label="المباراة التالية جاهزة"><div class="flash-in"><h2>المباراة التالية جاهزة</h2><p>${m?esc(pname(L,m.a))+' ضد '+esc(pname(L,m.b)):''}</p><button class="btn btn-xl" data-act="flashGo">إلى شاشة المباراة</button><button class="btn" data-act="flashClose" style="min-width:0;background:transparent;color:#FFFFFF;border-color:rgba(255,255,255,.5)">إغلاق</button></div></div>`;
+}
+function confirmBox(o){ui.sheet=Object.assign({type:'confirm'},o);renderSheet();}
+function needAdmin(fn){const L=cur();if(!L||!L.pin||now()<ui.adminUntil)return fn();ui.sheet={type:'pin',onOk:fn};renderSheet();}
+
+/* ---- timers painting (no re-render) ---- */
+function paintTimers(){
+  const L=cur(); if(!L) return;
+  const m=active(L);
+  document.querySelectorAll('[data-clock]').forEach(el=>{
+    if(el.dataset.clock==='match'){const r=matchRemaining(L,m);el.textContent=fmt(r);el.classList.toggle('low',!!m&&m.status!=='scoring'&&r<=60000&&r>0);}
+    else el.textContent=fmt(breakRemaining(L));
+  });
+  document.querySelectorAll('[data-prog]').forEach(el=>{
+    if(el.dataset.prog==='match'&&m){const d=m.dur||1;el.style.width=Math.min(100,100*(1-matchRemaining(L,m)/d))+'%';}
+    else if(el.dataset.prog==='break'){const t=(L.phase&&L.phase.total)||1;el.style.width=Math.min(100,100*(1-breakRemaining(L)/t))+'%';}
+  });
+}
+function tick(){
+  const L=cur(); if(!L) return;
+  let changed=false;
+  if(L.status!=='paused'&&L.status!=='done'){
+    const m=active(L);
+    if(m&&m.status==='live'&&now()>=m.endAt){toScoring(L,m,false);alarm('end');ui.flash='end';changed=true;}
+    if(L.phase&&L.phase.kind==='break'&&L.phase.endAt&&now()>=L.phase.endAt){L.phase={kind:'ready'};alarm('ready');ui.flash='ready';changed=true;}
+  }
+  if(changed){save();render();syncWake();return;}
+  paintTimers();
+}
+function toScoring(L,m,manual){
+  const left=m.status==='live'?Math.max(0,m.endAt-now()):(m.remaining||0);
+  m.status='scoring';m.leftMs=manual?left:0;m.remaining=0;m.endAt=null;m.finishedAt=now();
+}
+
+/* ---------------- actions ---------------- */
+const A={};
+A.installHide=actInstallHide;A.install=actInstall;
+function reopenIfDone(L){if(L.status==='done'){L.status='running';L.endedAt=null;L.endedManually=false;}if(!active(L)&&(!L.phase||L.phase.kind==='idle'||L.phase.kind==='match'))L.phase={kind:'ready'};}
+A.addMatches=()=>{ui.sheet={type:'addm'};renderSheet();};
+A.addRound=()=>{
+  const L=cur();if(!L||L.format==='ko')return;
+  const maxR=L.matches.reduce((a,m)=>Math.max(a,m.round||0),0);
+  const rr=E.roundRobin(L.participants.map(p=>p.id),1);
+  const last=L.matches.filter(m=>m.status!=='cancelled').slice(-1)[0]||null;
+  const arranged=E.arrange(rr.matches.map(x=>Object.assign({},x,{round:x.round+maxR})),null,last);
+  arranged.forEach(x=>L.matches.push(newMatch(x.a,x.b,{round:x.round,extraRound:true})));
+  Object.keys(rr.byes).forEach(k=>{L.byes=L.byes||{};L.byes[+k+maxR]=rr.byes[k];});
+  reopenIfDone(L);ui.sheet=null;toast(`أُضيفت ${arranged.length} مباراة في آخر الجدول`);go('schedule');
+};
+A.addOne=()=>{
+  const L=cur();if(!L||L.format==='ko')return;const a=$('#am-a').value,b=$('#am-b').value,nx=$('#am-next').checked;
+  if(a===b) return toast('اختر مشاركَين مختلفين.');
+  const m=newMatch(a,b,{extra:true});L.matches.push(m);
+  if(nx&&!active(L))moveToNext(L,m);
+  reopenIfDone(L);ui.sheet=null;toast('أُضيفت المباراة: '+pname(L,a)+' ضد '+pname(L,b));go('schedule');
+};
+A.backup=d=>{ui.sheet={type:'backup',scope:cur()?'one':'all'};renderSheet();};
+A.backupScope=d=>{ui.sheet.scope=d.k;renderSheet();};
+function copyFrom(id,okMsg){const ta=$('#'+id),txt=ta?ta.value:'';const fb=()=>{try{ta.focus();ta.select();ta.setSelectionRange(0,txt.length);document.execCommand&&document.execCommand('copy');toast('حدّدنا النص؛ انسخه يدوياً إن لم يُنسخ');}catch(e){}};try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(()=>toast(okMsg),fb);else fb();}catch(e){fb();}}
+A.copyBackup=()=>copyFrom('bk-out','تم نسخ النسخة الاحتياطية');
+A.dlBackup=()=>{try{const txt=$('#bk-out').value,blob=new Blob([txt],{type:'application/json'}),a=document.createElement('a');const L=cur();a.href=URL.createObjectURL(blob);a.download='dawri-'+(ui.sheet.scope==='one'&&L?L.name:'backup').replace(/[\\/:*?"<>|\s]+/g,'_')+'-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}catch(e){toast('تعذّر التنزيل، استخدم النسخ.');}};
+A.importOpen=()=>{ui.sheet={type:'import',text:'',err:''};renderSheet();};
+A.doImport=()=>{
+  const s=ui.sheet,txt=(($('#imp-text')||{}).value||'').trim();s.text=txt;
+  const r=E.parseImport(txt,DB.leagues.map(l=>l.id),now());
+  if(r.error){s.err=r.error;renderSheet();return;}
+  r.leagues.slice().reverse().forEach(l=>DB.leagues.unshift(l));
+  DB.currentId=r.leagues[0].id;ui.sheet=null;
+  toast(r.leagues.length===1?'استُورد الدوري «'+r.leagues[0].name+'»':'استُوردت '+r.leagues.length+' دوريات');
+  go('home');
+};
+A.namesOpen=()=>{const D=DB.draft;ui.sheet={type:'names',text:D.names.filter(x=>x.trim()).join('\n'),err:''};renderSheet();};
+A.useNames=()=>{
+  const s=ui.sheet,txt=(($('#nm-text')||{}).value||'');s.text=txt;
+  const names=E.parseNames(txt);
+  if(names.length<2){s.err='يحتاج الدوري اسمين على الأقل.';renderSheet();return;}
+  const D=DB.draft;D.names=names.slice(0,64);D.starter='';D.err='';ui.sheet=null;
+  toast('أُضيف '+D.names.length+' مشارك');commit();
+};
+function readFileInto(input,targetId,csvFirstCol){
+  const f=input.files&&input.files[0];if(!f)return;
+  if(f.size>5e6){toast('الملف كبير جداً.');return;}
+  const fr=new FileReader();
+  fr.onload=()=>{let t=String(fr.result||'').replace(/^﻿/,'');if(csvFirstCol&&/[,;\t]/.test(t)&&/\n/.test(t))t=t.split(/\r?\n/).map(l=>l.split(/[,;\t]/)[0].replace(/^"|"$/g,'')).join('\n');const ta=$('#'+targetId);if(ta)ta.value=t;if(ui.sheet)ui.sheet.text=t;};
+  fr.onerror=()=>toast('تعذّرت قراءة الملف.');
+  fr.readAsText(f,'utf-8');
+}
+
+A.go=d=>go(d.v);
+A.newLeague=()=>{if(!DB.draft)DB.draft=defDraft();go('setup');};
+A.cancelSetup=()=>{DB.draft=null;go(cur()?'home':'history');};
+A.dSet=d=>{const D=DB.draft;let v=d.val;if(d.k==='matchMin'||d.k==='breakMin')v=Number(v);D[d.k]=v;D.err='';commit();};
+A.dAdd=()=>{DB.draft.names.push('');commit();const i=DB.draft.names.length-1;const el=$('#dn-'+i);if(el)el.focus();};
+A.dDel=d=>{const D=DB.draft;if(D.names.length<=2)return;D.names.splice(+d.i,1);if(String(D.starter)===d.i)D.starter='';commit();};
+A.create=()=>{
+  const D=DB.draft,names=D.names.map(x=>x.trim());
+  const err=(t)=>{D.err=t;commit();};
+  if(!D.name.trim()) return err('اكتب اسم الدوري.');
+  if(names.length<2) return err('يحتاج الدوري مشاركَين اثنين على الأقل.');
+  const empty=names.findIndex(x=>!x); if(empty>=0) return err(`اكتب اسم المشارك رقم ${empty+1} أو احذف الخانة الفارغة.`);
+  const dup=names.find((x,i)=>names.indexOf(x)!==i); if(dup) return err(`الاسم «${dup}» مكرر. استخدم أسماء مختلفة.`);
+  const mm=Number(D.matchMin),bm=Number(D.breakMin);
+  if(!(mm>=0.5&&mm<=120)) return err('مدة المباراة يجب أن تكون بين نصف دقيقة و120 دقيقة.');
+  if(!(bm>=0&&bm<=60)) return err('الاستراحة يجب أن تكون بين 0 و60 دقيقة.');
+  const pts={win:parseInt(D.win,10),draw:parseInt(D.draw,10),loss:parseInt(D.loss,10)};
+  if([pts.win,pts.draw,pts.loss].some(x=>isNaN(x))) return err('أدخل أرقاماً صحيحة للنقاط.');
+  if(!(pts.win>pts.draw&&pts.draw>=pts.loss)) return err('يجب أن تكون نقاط الفوز أكبر من التعادل، والتعادل لا يقل عن الخسارة.');
+  let parts=names.map((nm,i)=>({id:uid(),name:nm,players:D.type==='individual'?[{id:'self',name:nm}]:[],_i:i}));
+  const starterPart=D.starter!==''?parts.find(p=>String(p._i)===String(D.starter)):null;
+  if(D.shuffle){for(let i=parts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[parts[i],parts[j]]=[parts[j],parts[i]];}}
+  parts.forEach(p=>delete p._i);
+  const L={id:uid(),name:D.name.trim(),type:D.type,format:D.format,matchMin:mm,breakMin:bm,points:pts,adjust:!!D.adjust,selfAssist:!!D.selfAssist,goalPrompt:true,tiebreak:['pts','gd','gf','h2h','w'],pin:'',participants:parts,matches:[],byes:{},ko:null,phase:{kind:'idle'},status:'running',createdAt:now(),endedAt:null,endedManually:false};
+  buildSchedule(L,starterPart?starterPart.id:null);
+  DB.leagues.unshift(L);DB.currentId=L.id;DB.draft=null;
+  toast(`تم إنشاء ${L.matches.length} مباراة`);
+  go('home');
+};
+A.start=d=>{
+  const L=cur(); if(!L) return;
+  if(L.status==='paused') return toast('الدوري متوقف مؤقتاً. استأنفه أولاً.');
+  if(L.status==='done') return;
+  if(active(L)) return toast('توجد مباراة جارية بالفعل.');
+  const m=d&&d.id?byId(L,d.id):pend(L)[0]; if(!m||m.status!=='pending') return;
+  moveToNext(L,m);
+  m.status='live';m.dur=Math.round(L.matchMin*60000);m.endAt=now()+m.dur;m.remaining=m.dur;m.startedAt=now();m.leftMs=null;
+  L.phase={kind:'match'};ui.flash=null;
+  unlockAudio();alarm('start');
+  ui.view='match';DB.view='match';commit();syncWake();
+};
+A.pause=()=>{const L=cur(),m=L&&active(L);if(!m||m.status!=='live')return;m.remaining=Math.max(0,m.endAt-now());m.endAt=null;m.status='paused';commit();syncWake();};
+A.resume=()=>{const L=cur(),m=L&&active(L);if(!m||m.status!=='paused')return;if(L.status==='paused')return toast('استأنف الدوري أولاً.');unlockAudio();m.endAt=now()+Math.max(1000,m.remaining);m.status='live';commit();syncWake();};
+A.adj=d=>{
+  const L=cur(),m=L&&active(L);if(!m||!L.adjust)return;const ms=Number(d.ms);
+  if(m.status==='live'){const rem=Math.max(0,m.endAt-now()),nr=Math.max(1000,rem+ms);m.endAt=now()+nr;m.dur=Math.max(1000,m.dur+(nr-rem));}
+  else if(m.status==='paused'){const nr=Math.max(1000,(m.remaining||0)+ms);m.dur=Math.max(1000,m.dur+(nr-m.remaining));m.remaining=nr;}
+  commit();
+};
+A.endEarly=()=>{const L=cur(),m=L&&active(L);if(!m)return;confirmBox({title:'إنهاء المباراة الآن؟',text:'سيتوقف الوقت وتنتقل إلى تسجيل النتيجة. يمكنك التراجع والعودة للوقت المتبقي قبل تأكيد النتيجة.',yes:'إنهاء وتسجيل النتيجة',danger:true,onYes:()=>{toScoring(L,m,true);commit();syncWake();}});};
+A.undoEnd=()=>{const L=cur(),m=L&&active(L);if(!m||m.status!=='scoring'||!(m.leftMs>0))return;m.status='paused';m.remaining=m.leftMs;m.leftMs=null;m.finishedAt=null;commit();};
+function tgt(t){const L=cur();return t==='edit'?ui.edit:(L&&active(L));}
+function refreshGoalTarget(t){if(t==='edit'){save();renderSheet();renderGoal();}else commit();}
+const defScorer=(L,p)=>(L.type==='individual'&&p.players.some(x=>x.id==='self'))?'self':'';
+A.sc=d=>{
+  const L=cur(),m=tgt(d.t);if(!m)return;const k='s'+d.s,dir=Number(d.d);
+  if(dir>0&&L.goalPrompt!==false){
+    if(m[k]>=99)return;
+    ui.goal={t:d.t,side:d.s,mode:'new',id:null,scorer:defScorer(L,part(L,m[d.s])),assist:''};
+    renderGoal();return;
+  }
+  m[k]=Math.max(0,Math.min(99,(m[k]||0)+dir));
+  if(dir<0){const ev=m.events.filter(e=>e.side===d.s);if(ev.length>m[k]){const rm=ev[ev.length-1];m.events.splice(m.events.indexOf(rm),1);}}
+  if(m.sa!==m.sb)m.pk=null;
+  refreshGoalTarget(d.t);
+};
+A.goalAssign=d=>{const L=cur(),m=tgt(d.t);if(!m)return;ui.goal={t:d.t,side:d.s,mode:'assign',id:null,scorer:defScorer(L,part(L,m[d.s])),assist:''};renderGoal();};
+A.goalEdit=d=>{const m=tgt(d.t);if(!m)return;const e=m.events.find(x=>x.id===d.id);if(!e)return;ui.goal={t:d.t,side:e.side,mode:'edit',id:e.id,scorer:e.scorer,assist:e.assist||''};renderGoal();};
+A.goalDel=d=>{
+  const m=tgt(d.t);if(!m)return;const e=m.events.find(x=>x.id===d.id);if(!e)return;
+  m.events.splice(m.events.indexOf(e),1);m['s'+e.side]=Math.max(0,m['s'+e.side]-1);if(m.sa!==m.sb)m.pk=null;
+  toast('حُذف الهدف وعُدّلت النتيجة');refreshGoalTarget(d.t);
+};
+A.gPick=d=>{const g=ui.goal,L=cur();if(!g)return;g[d.f]=d.id;if(d.f==='scorer'&&g.assist===d.id&&!L.selfAssist)g.assist='';renderGoal();};
+A.gNew=d=>{
+  const g=ui.goal,L=cur();if(!g)return;const m=tgt(g.t),p=part(L,m[g.side]);
+  const el=$('#g-new-'+d.f),nm=el?el.value.trim():'';if(!nm){toast('اكتب اسم اللاعب.');if(el)el.focus();return;}
+  let x=p.players.find(y=>y.name===nm);if(!x){x={id:uid(),name:nm};p.players.push(x);save();}
+  if(d.f==='assist'&&x.id===g.scorer&&!L.selfAssist)return toast('صاحب الهدف لا يُحسب له أسيست على هدفه.');
+  g[d.f]=x.id;if(d.f==='scorer'&&g.assist===x.id&&!L.selfAssist)g.assist='';renderGoal();
+};
+A.gSave=()=>{
+  const g=ui.goal,L=cur();if(!g||!g.scorer)return;const m=tgt(g.t);if(!m)return;
+  if(g.assist&&g.assist===g.scorer&&!L.selfAssist)return toast('صاحب الهدف لا يُحسب له أسيست على هدفه.');
+  m.events.forEach(e=>{delete e.auto;});
+  if(g.mode==='edit'){const e=m.events.find(x=>x.id===g.id);if(e){e.scorer=g.scorer;e.assist=g.assist;}}
+  else{
+    const k='s'+g.side;
+    if(g.mode==='new') m[k]=Math.min(99,m[k]+1);
+    else if(m.events.filter(e=>e.side===g.side).length>=m[k]){ui.goal=null;renderGoal();return;}
+    m.events.push({id:uid(),side:g.side,scorer:g.scorer,assist:g.assist});
+    if(m.sa!==m.sb)m.pk=null;
+  }
+  const t=g.t;ui.goal=null;renderGoal();
+  const x=part(L,m[g.side]).players.find(y=>y.id===g.scorer);
+  if(g.mode==='new'&&x)toast('هدف: '+x.name);
+  refreshGoalTarget(t);
+};
+A.gNoName=()=>{const g=ui.goal;if(!g)return;const m=tgt(g.t);if(!m)return;const k='s'+g.side;m[k]=Math.min(99,m[k]+1);if(m.sa!==m.sb)m.pk=null;const t=g.t;ui.goal=null;renderGoal();refreshGoalTarget(t);};
+A.gClose=()=>{ui.goal=null;renderGoal();};
+A.gOv=(d,el,e)=>{if(e.target===el)A.gClose();};
+
+A.pk=d=>{const m=tgt(d.t);if(!m)return;m.pk=d.p;if(d.t==='edit')renderSheet();else commit();};
+A.toggleStats=d=>{ui.statsOpen[d.t]=!ui.statsOpen[d.t];if(d.t==='edit')renderSheet();else render();};
+A.evAdd=d=>{
+  const L=cur(),m=tgt(d.t);if(!m)return;const p=part(L,m[d.s]);
+  if(!p.players.length) return toast('أضف اسم لاعب في هذا الفريق أولاً.');
+  const n=m.events.filter(e=>e.side===d.s).length; if(n>=m['s'+d.s]) return toast('زِد نتيجة الفريق أولاً.');
+  m.events.forEach(e=>{if(e.side===d.s&&e.auto)delete e.auto;});
+  m.events.push({id:uid(),side:d.s,scorer:p.players[0].id,assist:''});
+  if(d.t==='edit')renderSheet();else commit();
+};
+A.evDel=d=>{const m=tgt(d.t);if(!m)return;m.events=m.events.filter(e=>e.id!==d.id);if(d.t==='edit')renderSheet();else commit();};
+A.addPlayer=d=>{
+  const L=cur(),m=tgt(d.t);if(!m)return;const el=$('#np-'+d.t+'-'+d.s),nm=el?el.value.trim():'';
+  if(!nm) return toast('اكتب اسم اللاعب.');
+  const p=part(L,m[d.s]); if(p.players.some(x=>x.name===nm)) return toast('هذا الاسم موجود في الفريق.');
+  p.players.push({id:uid(),name:nm}); save(); if(d.t==='edit')renderSheet();else render();
+};
+A.confirm=()=>{
+  const L=cur(),m=L&&active(L);if(!m||m.status!=='scoring')return;
+  E.autoAttribute(L,m);
+  const errs=E.validate(L,m); if(errs.length){commit();return toast(errs[0]);}
+  m.status='done';m.leftMs=null;m.finishedAt=m.finishedAt||now();ui.goal=null;
+  if(L.format==='ko') E.koSync(L);
+  if(E.isComplete(L)) return finishLeague(L,false);
+  const br=Math.round(L.breakMin*60000);
+  if(br>0&&pend(L).length) L.phase={kind:'break',endAt:now()+br,total:br};
+  else {L.phase={kind:'ready'};alarm('ready');}
+  toast('تم تأكيد النتيجة وتحديث الترتيب');
+  commit();syncWake();
+};
+function finishLeague(L,manual){
+  const a=active(L); if(a){a.status='pending';a.sa=0;a.sb=0;a.events=[];a.pk=null;a.endAt=null;a.remaining=null;a.dur=null;a.startedAt=null;a.finishedAt=null;}
+  L.status='done';L.endedAt=now();L.endedManually=!!manual;L.phase={kind:'idle'};
+  ui.flash=null;ui.celebrate=true;alarm('win');ui.view='champion';DB.view='champion';commit();syncWake();
+}
+A.skipBreak=()=>{const L=cur();if(!L||!L.phase||L.phase.kind!=='break')return;L.phase={kind:'ready'};commit();syncWake();};
+A.extendBreak=()=>{const L=cur();if(!L||!L.phase||L.phase.kind!=='break')return;if(L.phase.endAt)L.phase.endAt+=60000;else L.phase.remaining=(L.phase.remaining||0)+60000;L.phase.total+=60000;commit();};
+A.flashGo=()=>{ui.flash=null;go('match');};
+A.flashClose=()=>{ui.flash=null;renderFlash();};
+A.openMatch=d=>{const L=cur(),m=byId(L,d.id);if(!m)return;ui.edit=m.status==='done'?clone(m):null;ui.statsOpen.edit=false;ui.sheet={type:'match',id:m.id};renderSheet();};
+A.closeSheet=()=>{ui.sheet=null;ui.edit=null;renderSheet();};
+A.ovClose=(d,el,e)=>{if(e.target===el)A.closeSheet();};
+A.sheetYes=()=>{const s=ui.sheet;ui.sheet=null;renderSheet();if(s&&s.onYes)s.onYes();};
+A.pinOk=()=>{const L=cur(),s=ui.sheet,v=($('#pin-in')||{}).value||'';if(v===L.pin){ui.adminUntil=now()+15*60000;ui.sheet=null;renderSheet();s.onOk();}else{s.err='الرمز غير صحيح.';renderSheet();}};
+A.saveEdit=()=>needAdmin(()=>{
+  const L=cur(),e=ui.edit,m=e&&byId(L,e.id);if(!m)return;
+  E.autoAttribute(L,e);
+  const errs=E.validate(L,e);if(errs.length){renderSheet();return toast(errs[0]);}
+  if(L.format==='ko'){
+    const oldW=E.winner(m),newW=E.winner(e);
+    if(oldW!==newW){const nx=L.matches.find(x=>x.ko&&x.ko.r===m.ko.r+1&&x.ko.k===(m.ko.k>>1));if(nx&&nx.status!=='pending')return toast('لا يمكن تغيير المتأهل: مباراة الدور التالي بدأت أو انتهت. أعدها أولاً.');}
+  }
+  m.sa=e.sa;m.sb=e.sb;m.pk=e.pk;m.events=e.events;
+  if(L.format==='ko'){E.koSync(L);if(L.status==='done'&&!E.isComplete(L)){L.status='running';L.endedAt=null;}}
+  ui.sheet=null;ui.edit=null;toast('تم حفظ التصحيح وإعادة احتساب الترتيب والإحصائيات');commit();
+});
+A.replay=d=>needAdmin(()=>{
+  const L=cur(),m=byId(L,d.id);if(!m)return;
+  if(L.format==='ko'&&m.status==='done'){const nx=L.matches.find(x=>x.ko&&x.ko.r===m.ko.r+1&&x.ko.k===(m.ko.k>>1));if(nx&&nx.status!=='pending')return toast('لا يمكن إعادتها: مباراة الدور التالي بدأت أو انتهت.');}
+  if(active(L)&&active(L)!==m) return toast('أنهِ المباراة الجارية أولاً.');
+  confirmBox({title:'إعادة المباراة؟',text:'ستُمسح نتيجتها وإحصائياتها، وتصبح المباراة التالية في الجدول.',yes:'إعادة المباراة',danger:true,onYes:()=>{
+    Object.assign(m,{status:'pending',sa:0,sb:0,pk:null,events:[],dur:null,endAt:null,remaining:null,leftMs:null,startedAt:null,finishedAt:null});
+    if(L.status==='done'){L.status='running';L.endedAt=null;L.endedManually=false;}
+    if(L.format==='ko')E.koSync(L);
+    moveToNext(L,m);if(!L.phase||L.phase.kind==='idle'||L.phase.kind==='match')L.phase={kind:'ready'};
+    ui.edit=null;toast('أُعيدت المباراة إلى الجدول كمباراة تالية');commit();
+  }});
+});
+A.cancelMatch=d=>needAdmin(()=>{
+  const L=cur(),m=byId(L,d.id);if(!m||L.format==='ko')return;
+  confirmBox({title:'إلغاء المباراة؟',text:'لن تُحتسب في الترتيب ولا الإحصائيات. يمكن استعادتها لاحقاً من الجدول.',yes:'إلغاء المباراة',danger:true,onYes:()=>{
+    const wasActive=ACTIVE.indexOf(m.status)>=0;
+    Object.assign(m,{status:'cancelled',sa:0,sb:0,events:[],endAt:null,remaining:null,leftMs:null});
+    if(wasActive)L.phase={kind:'ready'};
+    ui.edit=null;
+    if(L.status!=='done'&&E.isComplete(L))return finishLeague(L,false);
+    commit();syncWake();
+  }});
+});
+A.restoreMatch=d=>{const L=cur(),m=byId(L,d.id);if(!m)return;m.status='pending';if(L.status==='done'){L.status='running';L.endedAt=null;L.endedManually=false;}ui.sheet=null;toast('استُعيدت المباراة');commit();};
+A.playNow=d=>{const L=cur(),m=byId(L,d.id);if(!m||active(L))return;moveToNext(L,m);ui.sheet=null;toast('أصبحت المباراة التالية');commit();};
+A.mv=d=>{
+  const L=cur(),m=byId(L,d.id);if(!m||m.status!=='pending')return;
+  const i=L.matches.indexOf(m),dir=Number(d.d);let j=i+dir;
+  while(j>=0&&j<L.matches.length&&L.matches[j].status!=='pending')j+=dir;
+  if(j<0||j>=L.matches.length)return;
+  L.matches[i]=L.matches[j];L.matches[j]=m;commit();
+};
+A.pauseLeague=()=>{
+  const L=cur();if(!L||L.status==='done')return;const m=active(L);
+  if(m&&m.status==='live'){m.remaining=Math.max(0,m.endAt-now());m.endAt=null;m.status='paused';}
+  if(L.phase&&L.phase.kind==='break'&&L.phase.endAt){L.phase.remaining=Math.max(0,L.phase.endAt-now());L.phase.endAt=null;}
+  L.status='paused';toast('تم إيقاف الدوري مؤقتاً');commit();syncWake();
+};
+A.resumeLeague=()=>{
+  const L=cur();if(!L)return;L.status='running';
+  if(L.phase&&L.phase.kind==='break'&&!L.phase.endAt)L.phase.endAt=now()+Math.max(1000,L.phase.remaining||0);
+  toast('استُؤنف الدوري');commit();syncWake();
+};
+A.endLeague=()=>needAdmin(()=>{const L=cur();confirmBox({title:'إنهاء الدوري الآن؟',text:totals(L).left?`ما زالت ${totals(L).left} مباراة لم تُلعب. سيُعرض الترتيب الحالي كترتيب نهائي، ويمكنك متابعة الدوري لاحقاً من الإدارة.`:'سيُغلق الدوري ويُعرض الترتيب النهائي.',yes:'إنهاء الدوري',danger:true,onYes:()=>finishLeague(L,totals(L).left>0)});});
+A.reopenLeague=()=>{const L=cur();if(!L||!totals(L).left)return;L.status='running';L.endedAt=null;L.endedManually=false;L.phase={kind:'ready'};toast('عاد الدوري للعمل');commit();};
+A.tb=d=>{const L=cur(),i=+d.i,j=i+Number(d.d);if(j<1||j>=L.tiebreak.length)return;const t=L.tiebreak;[t[i],t[j]]=[t[j],t[i]];commit();};
+A.mAddPlayer=d=>{const L=cur(),p=part(L,d.pid),el=$('#mp-'+d.pid),nm=el?el.value.trim():'';if(!nm)return toast('اكتب اسم اللاعب.');if(p.players.some(x=>x.name===nm))return toast('هذا الاسم موجود.');p.players.push({id:uid(),name:nm});commit();};
+A.delPlayer=d=>{const L=cur(),p=part(L,d.pid);const used=L.matches.some(m=>m.events.some(e=>(m.a===p.id&&e.side==='a'||m.b===p.id&&e.side==='b')&&(e.scorer===d.plid||e.assist===d.plid)));if(used)return toast('لا يمكن حذفه: له أهداف أو تمريرات مسجلة. احذفها من تفاصيل المباراة أولاً.');p.players=p.players.filter(x=>x.id!==d.plid);commit();};
+A.mAddPart=()=>{const L=cur();if(started(L))return;const el=$('#mp-new'),nm=el?el.value.trim():'';if(!nm)return toast('اكتب اسم المشارك.');if(L.participants.some(p=>p.name===nm))return toast('الاسم مكرر.');L.participants.push({id:uid(),name:nm,players:L.type==='individual'?[{id:'self',name:nm}]:[]});buildSchedule(L,null);toast(`أُعيد إنشاء الجدول: ${L.matches.length} مباراة`);commit();};
+A.mDelPart=d=>{const L=cur();if(started(L))return;if(L.participants.length<=2)return toast('يحتاج الدوري مشاركَين على الأقل.');confirmBox({title:'حذف المشارك؟',text:'سيُعاد إنشاء جدول المباريات.',yes:'حذف',danger:true,onYes:()=>{L.participants=L.participants.filter(p=>p.id!==d.pid);buildSchedule(L,null);commit();}});};
+A.theme=d=>{DB.prefs.theme=d.k;commit();};
+A.accent=d=>{DB.prefs.accent=d.k;commit();};
+A.testSound=()=>{unlockAudio();const s=DB.prefs.sound;DB.prefs.sound=true;alarm('end');DB.prefs.sound=s;};
+A.savePin=()=>{const L=cur(),v=(($('#s-pin')||{}).value||'').trim();if(v.length<4)return toast('الرمز يجب أن يكون 4 خانات على الأقل.');const doit=()=>{L.pin=v;ui.adminUntil=now()+15*60000;toast('تم حفظ رمز المسؤول');commit();};L.pin?needAdmin(doit):doit();};
+A.clearPin=()=>needAdmin(()=>{const L=cur();L.pin='';toast('أُزيل رمز المسؤول');commit();});
+A.openLeague=d=>{DB.currentId=d.id;go('home');};
+A.delLeague=d=>{const L=DB.leagues.find(x=>x.id===d.id);if(!L)return;confirmBox({title:'حذف الدوري نهائياً؟',text:`سيُحذف «${L.name}» بكل نتائجه وإحصائياته من هذا الجهاز.`,yes:'حذف نهائي',danger:true,onYes:()=>{DB.leagues=DB.leagues.filter(x=>x.id!==d.id);if(DB.currentId===d.id)DB.currentId=DB.leagues[0]?DB.leagues[0].id:null;commit();}});};
+A.exportCsv=()=>{ui.sheet={type:'csv'};renderSheet();};
+A.copyCsv=()=>{const ta=$('#csv-out');const txt=ta?ta.value:'';const fallback=()=>{try{ta.focus();ta.select();ta.setSelectionRange(0,txt.length);document.execCommand&&document.execCommand('copy');toast('حدّدنا النص؛ انسخه من القائمة إن لم يُنسخ تلقائياً');}catch(e){}};try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(()=>toast('تم النسخ'),fallback);else fallback();}catch(e){fallback();}};
+A.dlCsv=()=>{try{const L=cur(),blob=new Blob(['﻿'+csv(L)],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(L.name||'league').replace(/[\\/:*?"<>|]/g,'_')+'.csv';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}catch(e){toast('تعذّر التنزيل، استخدم النسخ.');}};
+A.printPage=()=>{ui.sheet=null;renderSheet();go('standings');setTimeout(()=>{try{window.print();}catch(e){}},150);};
+
+function csv(L){
+  const q=v=>{v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const rows=[[L.name],[FORMAT_LABEL[L.format]+' · '+STATE_LABEL[leagueState(L)]],[]];
+  if(L.format!=='ko'){
+    rows.push(['الترتيب']);rows.push(['المركز','المشارك','لعب','فاز','تعادل','خسر','له','عليه','الفارق','النقاط']);
+    E.table(L).forEach(r=>rows.push([r.rank+(r.tied?'=':''),r.name,r.P,r.W,r.D,r.L,r.GF,r.GA,r.GD,r.Pts]));rows.push([]);
+  } else {rows.push(['الترتيب']);E.koRanking(L).forEach(r=>rows.push([r.rank,pname(L,r.id),r.label]));rows.push([]);}
+  rows.push(['النتائج']);rows.push(['رقم','الجولة','المشارك الأول','أهداف الأول','أهداف الثاني','المشارك الثاني','الحالة']);
+  const SL={pending:'لم تبدأ',live:'جارية',paused:'متوقفة',scoring:'بانتظار النتيجة',done:'انتهت',cancelled:'ملغاة'};
+  L.matches.forEach((m,i)=>rows.push([i+1,roundLabel(L,m),pname(L,m.a),m.status==='done'?m.sa:'',m.status==='done'?m.sb:'',pname(L,m.b),SL[m.status]+(m.status==='done'&&L.format==='ko'&&m.sa===m.sb?' (ترجيح: '+pname(L,m.pk)+')':'')]));
+  const S=E.playerStats(L);
+  if(S.attr>0){rows.push([]);rows.push(['إحصائيات اللاعبين']);rows.push(['اللاعب','المشارك','أهداف','تمريرات حاسمة','المجموع']);S.players.filter(r=>r.G+r.A>0).sort((a,b)=>(b.G+b.A)-(a.G+a.A)).forEach(r=>rows.push([r.name,r.team,r.G,r.A,r.G+r.A]));rows.push(['أهداف منسوبة',S.attr+' من '+S.total]);}
+  return rows.map(r=>r.map(q).join(',')).join('\n');
+}
+
+/* ---------------- field handling ---------------- */
+function softRender(){
+  clearTimeout(softRender._t);
+  softRender._t=setTimeout(()=>{
+    const a=document.activeElement,id=a&&a.id;let s0=null,s1=null;
+    try{s0=a.selectionStart;s1=a.selectionEnd;}catch(x){}
+    render();
+    if(id){const el=document.getElementById(id);if(el&&el!==document.activeElement){try{el.focus({preventScroll:true});if(s0!=null)el.setSelectionRange(s0,s1);}catch(x){}}}
+  },0);
+}
+function refreshStarter(){
+  const sel=$('#d-start'),D=DB.draft;if(!sel||!D)return;
+  sel.innerHTML='<option value="">تلقائي</option>'+D.names.map((nm,i)=>nm.trim()?`<option value="${i}" ${String(D.starter)===String(i)?'selected':''}>${esc(nm)}</option>`:'').join('');
+}
+function onField(el,isChange){
+  const k=el.dataset.in,val=el.type==='checkbox'?el.checked:el.value,L=cur();
+  if(k.indexOf('d.')===0){const f=k.slice(2);DB.draft[f]=val;DB.draft.err='';save();if(isChange&&(el.dataset.re||f==='starter'))softRender();return;}
+  if(k==='dname'){DB.draft.names[+el.dataset.i]=val;save();if(isChange)refreshStarter();return;}
+  if(k==='dcount'){if(!isChange)return;const n=Math.max(2,Math.min(64,parseInt(val,10)||2)),D=DB.draft;while(D.names.length<n)D.names.push('');if(D.names.length>n)D.names.length=n;save();softRender();return;}
+  if(k==='statsPlayer'){ui.statsPlayer=val;softRender();return;}
+  if(k.indexOf('pref.')===0){DB.prefs[k.slice(5)]=val;save();return;}
+  if(!L) return;
+  if(k.indexOf('set.')===0){
+    const f=k.slice(4);
+    if(f==='name'){if(val.trim()){L.name=val.trim();save();if(isChange)softRender();}return;}
+    if(f==='adjust'||f==='selfAssist'||f==='goalPrompt'){L[f]=!!val;save();softRender();return;}
+    if(!isChange)return;
+    const num=Number(val);
+    if(f==='matchMin'){if(num>=0.5&&num<=120){L.matchMin=num;toast('ستُطبَّق المدة الجديدة على المباريات القادمة');}else toast('أدخل مدة بين 0.5 و120 دقيقة');save();softRender();return;}
+    if(f==='breakMin'){if(num>=0&&num<=60){L.breakMin=num;toast('ستُطبَّق على الاستراحات القادمة');}else toast('أدخل مدة بين 0 و60 دقيقة');save();softRender();return;}
+    if(f==='win'||f==='draw'||f==='loss'){const v=parseInt(val,10),P=Object.assign({},L.points,{[f]:v});if(!isNaN(v)&&P.win>P.draw&&P.draw>=P.loss){L.points=P;toast('أُعيد احتساب الترتيب بالنقاط الجديدة');}else toast('الفوز أكبر من التعادل، والتعادل لا يقل عن الخسارة');save();softRender();return;}
+  }
+  if(k==='pname'){const p=part(L,el.dataset.pid),v=val.trim();if(!v)return;if(L.participants.some(x=>x!==p&&x.name===v)){if(isChange)toast('الاسم مكرر');return;}p.name=v;const self=p.players.find(x=>x.id==='self');if(self)self.name=v;save();if(isChange)softRender();return;}
+  if(k==='plname'){const p=part(L,el.dataset.pid),x=p&&p.players.find(y=>y.id===el.dataset.plid);if(x&&val.trim()){x.name=val.trim();save();}return;}
+  if(k==='evScorer'||k==='evAssist'){
+    const m=tgt(el.dataset.t);if(!m)return;const e=m.events.find(x=>x.id===el.dataset.id);if(!e)return;
+    delete e.auto;
+    if(k==='evScorer'){e.scorer=val;if(e.assist===val&&!L.selfAssist)e.assist='';}else e.assist=val;
+    if(el.dataset.t==='edit')renderSheet();else save();softRender();
+  }
+}
+
+/* ---------------- confetti ---------------- */
+function confetti(){
+  try{if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;}catch(e){}
+  const c=document.createElement('canvas');c.id='confetti';document.body.appendChild(c);
+  const ctx=c.getContext&&c.getContext('2d');if(!ctx){c.remove();return;}
+  const W=c.width=innerWidth*devicePixelRatio,H=c.height=innerHeight*devicePixelRatio;
+  const cols=['#F2C443','#FFFFFF','#2EC06B','#0E6B37','#FF7A62'];
+  const ps=Array.from({length:170},()=>({x:Math.random()*W,y:-Math.random()*H*0.6,vx:(Math.random()-.5)*3*devicePixelRatio,vy:(2+Math.random()*4)*devicePixelRatio,s:(5+Math.random()*7)*devicePixelRatio,r:Math.random()*6,vr:(Math.random()-.5)*.25,c:cols[Math.floor(Math.random()*cols.length)]}));
+  const t0=performance.now();
+  (function f(t){ctx.clearRect(0,0,W,H);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);ctx.restore();});if(t-t0<4500)requestAnimationFrame(f);else c.remove();})(t0);
+}
+
+/* ---------------- wiring ---------------- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]'); if(!b||b.disabled) return;
+  const fn=A[b.dataset.act]; if(!fn) return;
+  if(b.dataset.act!=='ovClose') e.stopPropagation();
+  unlockAudio();
+  fn(b.dataset,b,e);
+});
+document.addEventListener('input',e=>{const el=e.target;if(el.dataset&&el.dataset.in&&el.tagName!=='SELECT'&&el.type!=='checkbox')onField(el,false);});
+document.addEventListener('change',e=>{const el=e.target;if(el.id==='imp-file'){readFileInto(el,'imp-text',false);return;}if(el.id==='nm-file'){readFileInto(el,'nm-text',true);return;}if(el.dataset&&el.dataset.in)onField(el,true);});
+document.addEventListener('keydown',e=>{
+  const el=e.target;
+  if(e.key==='Enter'&&el.dataset&&el.dataset.in==='dname'){e.preventDefault();const i=+el.dataset.i,nx=$('#dn-'+(i+1));if(nx)nx.focus();else A.dAdd();}
+  if(e.key==='Enter'&&el.id==='pin-in'){e.preventDefault();A.pinOk();}
+  if(e.key==='Enter'&&(el.id==='g-new-scorer'||el.id==='g-new-assist')){e.preventDefault();A.gNew({f:el.id.slice(6)});}
+  if(e.key==='Escape'){if(ui.goal)A.gClose();else if(ui.sheet)A.closeSheet();}
+});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){tick();syncWake();}});
+window.addEventListener('pageshow',()=>tick());
+window.addEventListener('storage',e=>{if(e.key===KEY){DB=load();render();}});
+
+render();
+tick();
+setInterval(tick,250);
+window.__dawri={E,get DB(){return DB;},A,tick};
+})();
+</script>
+
+</body>
+</html>
